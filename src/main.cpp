@@ -7,8 +7,8 @@
 
 using std::numbers::pi;
 
-constexpr int width = 512;
-constexpr int height = 512;
+constexpr int width = 1024;
+constexpr int height = 768;
 
 constexpr float wheel_power = 0.01f;
 
@@ -178,18 +178,23 @@ int main() {
     window.clear(sf::Color(0, 0, 0));
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::I)) {
       Drive(self_body, 0.8, 0.8);
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) {
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) {
       Drive(self_body, -0.8, -0.8);
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::J)) {
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::J)) {
       Drive(self_body, -0.5, 0.5);
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
       Drive(self_body, 0.5, -0.5);
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
       self_body->SetLinearVelocity(b2Vec2(0, 0));
       opp_body->SetLinearVelocity(b2Vec2(0, 0));
       opp_body->SetAngularVelocity(0);
       self_body->SetAngularVelocity(0);
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       window.close();
     }
 
