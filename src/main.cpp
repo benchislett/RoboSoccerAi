@@ -10,16 +10,13 @@ using std::numbers::pi;
 constexpr int width = 512;
 constexpr int height = 512;
 
-constexpr int world_size = 128;
-
-constexpr float x_scale = width / world_size;
-constexpr float y_scale = height / world_size;
+constexpr float wheel_power = 0.01f;
 
 constexpr int bot_width = 70;
 constexpr int bot_height = 30;
 
-constexpr float bot_width_f =  (float)bot_width / (float)width * x_scale;
-constexpr float bot_height_f = (float)bot_height / (float)height * y_scale;
+constexpr float bot_width_f =  (float)bot_width / (float)width;
+constexpr float bot_height_f = (float)bot_height / (float)height;
 
 sf::Color b2ColorToSfColor(b2Color color, int alpha = 255) {
   return sf::Color((sf::Uint8)(color.r*255), (sf::Uint8)(color.g*255), (sf::Uint8)(color.b*255), (sf::Uint8) alpha);
@@ -37,7 +34,7 @@ public:
     poly.setPointCount(vertex_count);
     for (int i = 0; i < vertex_count; i++) {
       b2Vec2 vertex = vertices[i];
-      poly.setPoint(i, sf::Vector2f(vertex.x*world_size, vertex.y*world_size));
+      poly.setPoint(i, sf::Vector2f(vertex.x*width, vertex.y*height));
     }
     poly.setOutlineColor(b2ColorToSfColor(color, 50));
     if (fill) {
@@ -57,10 +54,10 @@ public:
   }
 
   void DrawCircle(const b2Vec2& center, float radius, const b2Color& color, bool fill) {
-    const float r = radius * world_size;
+    const float r = radius * fmin(width, height);
     sf::CircleShape c(r);
     c.setOrigin(r, r);
-    c.setPosition(center.x*world_size,center.y*world_size);
+    c.setPosition(center.x*width,center.y*height);
     c.setOutlineColor(b2ColorToSfColor(color, 50));
     if (fill) {
       c.setFillColor(b2ColorToSfColor(color));
@@ -79,14 +76,14 @@ public:
   }
 
   void DrawPoint(const b2Vec2& p, float size, const b2Color& color) {
-    sf::Vertex pt(sf::Vector2f(p.x*world_size, p.y*world_size), b2ColorToSfColor(color));
+    sf::Vertex pt(sf::Vector2f(p.x*width, p.y*height), b2ColorToSfColor(color));
     window->draw(&pt, 1, sf::Points);
   }
 
   void DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color) {
     sf::Vertex p[2];
-    p[0] = sf::Vertex(sf::Vector2f(p1.x*world_size,p1.y*world_size), b2ColorToSfColor(color));
-    p[1] = sf::Vertex(sf::Vector2f(p2.x*world_size,p2.y*world_size), b2ColorToSfColor(color));
+    p[0] = sf::Vertex(sf::Vector2f(p1.x*width,p1.y*height), b2ColorToSfColor(color));
+    p[1] = sf::Vertex(sf::Vector2f(p2.x*width,p2.y*height), b2ColorToSfColor(color));
     window->draw(p, 2, sf::Lines);
   }
 
@@ -128,8 +125,6 @@ void Drive(b2Body* body, float left, float right) {
   b2Vec2 left_force(cosf(rot) * left, sinf(rot) * -left);
   b2Vec2 right_force(cosf(rot) * right, sinf(rot) * -right);
 
-  left_force.x *= x_scale; right_force.x *= x_scale;
-  left_force.y *= y_scale; right_force.y *= y_scale;
   body->ApplyForce(left_force, left_wheel(body), true);
   body->ApplyForce(right_force, right_wheel(body), true);
 }
@@ -141,11 +136,15 @@ int main() {
 
   b2BodyDef self_body_def;
   self_body_def.type = b2_dynamicBody;
-  self_body_def.position.Set(bot_width_f/2.f, y_scale/2.f);
+  self_body_def.position.Set(bot_width_f/2.f, 0.5f);
+  self_body_def.linearDamping = 1.f;
+  self_body_def.angularDamping = 1.f;
 
   b2BodyDef opp_body_def;
   opp_body_def.type = b2_dynamicBody;
-  opp_body_def.position.Set(x_scale-bot_width_f/2.f, y_scale/2.f);
+  opp_body_def.position.Set(1.f-bot_width_f/2.f, 0.5f);
+  opp_body_def.linearDamping = 1.f;
+  opp_body_def.angularDamping = 1.f;
 
   b2Body* self_body = world.CreateBody(&self_body_def);
   b2Body* opp_body = world.CreateBody(&opp_body_def);
@@ -156,7 +155,7 @@ int main() {
   b2FixtureDef robot_fixture;
   robot_fixture.shape = &robot_shape;
   robot_fixture.density = 10.f;
-  robot_fixture.friction = 20.f;
+  robot_fixture.friction = 1.f;
 
   self_body->CreateFixture(&robot_fixture);
   opp_body->CreateFixture(&robot_fixture);
@@ -165,9 +164,6 @@ int main() {
 
   const int velocityIterations = 6;
   const int positionIterations = 2;
-
-  const b2Vec2 right_force(x_scale*y_scale, 0.f);
-  const b2Vec2 left_force(-x_scale*y_scale, 0.f);
 
   sf::RenderWindow window(sf::VideoMode(width, height), "RoboAI Window", sf::Style::Titlebar);
 
