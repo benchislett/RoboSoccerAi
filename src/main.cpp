@@ -134,15 +134,51 @@ int main() {
   b2Vec2 gravity(0.f, 0.f);
   b2World world(gravity);
 
+  // WALLS
+
+  b2PolygonShape horizontal_wall_shape;
+  horizontal_wall_shape.SetAsBox(1.f, 0.01f);
+
+  b2PolygonShape vertical_wall_shape;
+  vertical_wall_shape.SetAsBox(0.01f, 1.f);
+
+  b2FixtureDef horizontal_wall_fixture;
+  horizontal_wall_fixture.shape = &horizontal_wall_shape;
+
+  b2FixtureDef vertical_wall_fixture;
+  vertical_wall_fixture.shape = &vertical_wall_shape;
+
+  b2BodyDef top_wall_body_def;
+  top_wall_body_def.position.Set(0.f, 0.01f);
+  b2Body* top_wall_body = world.CreateBody(&top_wall_body_def);
+  top_wall_body->CreateFixture(&horizontal_wall_fixture);
+
+  b2BodyDef bottom_wall_body_def;
+  bottom_wall_body_def.position.Set(0.f, 0.99f);
+  b2Body* bottom_wall_body = world.CreateBody(&bottom_wall_body_def);
+  bottom_wall_body->CreateFixture(&horizontal_wall_fixture);
+
+  b2BodyDef left_wall_body_def;
+  left_wall_body_def.position.Set(0.01f, 0.f);
+  b2Body* left_wall_body = world.CreateBody(&left_wall_body_def);
+  left_wall_body->CreateFixture(&vertical_wall_fixture);
+
+  b2BodyDef right_wall_body_def;
+  right_wall_body_def.position.Set(0.99f, 0.f);
+  b2Body* right_wall_body = world.CreateBody(&right_wall_body_def);
+  right_wall_body->CreateFixture(&vertical_wall_fixture);
+
+  // BOTS
+
   b2BodyDef self_body_def;
   self_body_def.type = b2_dynamicBody;
-  self_body_def.position.Set(bot_width_f/2.f, 0.5f);
+  self_body_def.position.Set(0.1f, 0.5f);
   self_body_def.linearDamping = 1.f;
   self_body_def.angularDamping = 1.f;
 
   b2BodyDef opp_body_def;
   opp_body_def.type = b2_dynamicBody;
-  opp_body_def.position.Set(1.f-bot_width_f/2.f, 0.5f);
+  opp_body_def.position.Set(0.9f, 0.5f);
   opp_body_def.linearDamping = 1.f;
   opp_body_def.angularDamping = 1.f;
 
@@ -160,10 +196,33 @@ int main() {
   self_body->CreateFixture(&robot_fixture);
   opp_body->CreateFixture(&robot_fixture);
 
+  // BALL
+  
+  b2CircleShape ball_shape;
+  ball_shape.m_radius = 0.02f;
+
+  b2FixtureDef ball_fixture;
+  ball_fixture.shape = &ball_shape;
+  ball_fixture.density = 1.f;
+  ball_fixture.friction = 5.f;
+  
+  b2BodyDef ball_body_def;
+  ball_body_def.type = b2_dynamicBody;
+  ball_body_def.position.Set(0.5f, 0.5f);
+  ball_body_def.linearDamping = 0.5f;
+  ball_body_def.angularDamping = 1.f;
+
+  b2Body* ball_body = world.CreateBody(&ball_body_def);
+  ball_body->CreateFixture(&ball_fixture);
+
+  // PHYSICS
+
   const float timeStep = 1.f / 60.f;
 
   const int velocityIterations = 6;
   const int positionIterations = 2;
+
+  // GRAPHICS
 
   sf::RenderWindow window(sf::VideoMode(width, height), "RoboAI Window", sf::Style::Titlebar);
 
