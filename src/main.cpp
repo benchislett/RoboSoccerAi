@@ -173,14 +173,14 @@ int main() {
   b2BodyDef self_body_def;
   self_body_def.type = b2_dynamicBody;
   self_body_def.position.Set(0.1f, 0.5f);
-  self_body_def.linearDamping = 1.f;
-  self_body_def.angularDamping = 1.f;
+  self_body_def.linearDamping = 3.f;
+  self_body_def.angularDamping = 3.f;
 
   b2BodyDef opp_body_def;
   opp_body_def.type = b2_dynamicBody;
   opp_body_def.position.Set(0.9f, 0.5f);
-  opp_body_def.linearDamping = 1.f;
-  opp_body_def.angularDamping = 1.f;
+  opp_body_def.linearDamping = 3.f;
+  opp_body_def.angularDamping = 3.f;
 
   b2Body* self_body = world.CreateBody(&self_body_def);
   b2Body* opp_body = world.CreateBody(&opp_body_def);
@@ -259,10 +259,16 @@ int main() {
 
     world.Step(timeStep, velocityIterations, positionIterations);
 
+    b2Vec2 ball_position = ball_body->GetPosition();
+    if (ball_position.x > 0.95f && (ball_position.y > 0.35f && ball_position.y < 0.7f)) {
+      ball_body->SetTransform(b2Vec2(0.5f, 0.5f), 0.f);
+    }
+
     world.DebugDraw();
     debugDraw.DrawCircle(left_wheel(self_body), 0.005, b2Color(0,0,1), true);
     debugDraw.DrawCircle(right_wheel(self_body), 0.005, b2Color(0,0,1), true);
     window.display();
+
     i++;
   }
 
