@@ -5,10 +5,13 @@
 #include <cmath>
 #include <memory>
 #include <numbers>
+#include <random>
 
 using std::make_unique;
 using std::unique_ptr;
 using std::numbers::pi;
+
+constexpr int fps = 60;
 
 // dimensions in pixels
 constexpr float width = 1024;
@@ -28,6 +31,12 @@ constexpr float wall_thickness = 5;
 // dimension in box2d
 constexpr float bot_width_f = bot_width / length;
 constexpr float bot_height_f = bot_height / length;
+
+int randInRange(int lo, int hi) {
+  static std::mt19937 gen(std::random_device{}());
+
+  return std::uniform_int_distribution<>{lo, hi}(gen);
+}
 
 sf::Color b2ColorToSfColor(b2Color color, int alpha = 255) {
   return sf::Color((sf::Uint8)(color.r*255), (sf::Uint8)(color.g*255), (sf::Uint8)(color.b*255), (sf::Uint8) alpha);
@@ -165,8 +174,17 @@ struct Ball {
     body->CreateFixture(fixture.get());
   }
 
+  void setPosition(int x, int y) {
+    body->SetTransform(b2Vec2(x/length, y/length), 0.f);
+  }
+
   void reset() {
-    body->SetTransform(b2Vec2(width/length/2.f, height/length/2.f), 0.f);
+    setPosition(width/2, length/2);
+  }
+
+  void teleport() {
+    int pad = 2 * wall_thickness + ball_radius;
+    setPosition(randInRange(pad, width-pad), randInRange(pad, height-pad));
   }
 };
 
@@ -277,11 +295,11 @@ int main() {
   VerticalWall right_wall(world, width-wall_thickness, height/2, height);
 
   Bot player_bot(world, 100, height/2);
-  Bot enemy_bot(world, width-100, height/2);
+  // Bot enemy_bot(world, width-100, height/2);
 
   Ball ball(world);
   
-  const float timeStep = 1.f / 60.f;
+  const float timeStep = 1.f / (float)fps;
 
   const int velocityIterations = 6;
   const int positionIterations = 2;
@@ -292,8 +310,9 @@ int main() {
   world.SetDebugDraw(&debugDraw);
   debugDraw.SetFlags(0x00ff);
 
-  window.setFramerateLimit(60);
+  // window.setFramerateLimit(fps);
 
+  int hits = 0;
   int i = 0;
   while (window.isOpen()) {
     window.clear(sf::Color(0, 0, 0));
@@ -311,8 +330,6 @@ int main() {
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)) {
       player_bot.body->SetLinearVelocity(b2Vec2(0, 0));
-      enemy_bot.body->SetLinearVelocity(b2Vec2(0, 0));
-      enemy_bot.body->SetAngularVelocity(0);
       player_bot.body->SetAngularVelocity(0);
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
@@ -322,11 +339,18 @@ int main() {
     world.Step(timeStep, velocityIterations, positionIterations);
 
     b2Vec2 ball_position = ball.body->GetPosition();
-    if (ball_position.x > 0.95f && (ball_position.y > 0.2f && ball_position.y < 0.8f)) {
-      ball.reset();
+    b2Vec2 player_position = player_bot.body->GetPosition();
+    if ((player_position-ball_position).Length() < (60/length)) {
+      ball.teleport();
+      hits++;
+      if (hits%10 == 0) printf("Hit %d\n", hits);
+      if (hits == 1000) return 0;
     }
+    /*if (ball_position.x > 0.95f && (ball_position.y > 0.2f && ball_position.y < 0.8f)) {
+      ball.reset();
+    }*/
 
-    b2Vec2 action = BallChase{}.action(player_bot.body->GetPosition(), player_bot.body->GetAngle(), enemy_bot.body->GetPosition(), enemy_bot.body->GetAngle(), ball.body->GetPosition());
+    b2Vec2 action = BallChase{}.action(player_position, player_bot.body->GetAngle(), b2Vec2(0, 0), 0, ball_position);
     Drive(player_bot.body, action.x, action.y);
 
     world.DebugDraw();
