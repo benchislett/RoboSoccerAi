@@ -238,6 +238,33 @@ struct VerticalWall {
   }
 };
 
+struct Strategy {
+  virtual b2Vec2 action(b2Vec2 self_pos, float self_rot, b2Vec2 opp_pos, float opp_rot, b2Vec2 ball_pos) = 0;
+};
+
+struct BallChase : Strategy {
+  b2Vec2 action(b2Vec2 self_pos, float self_rot, b2Vec2 opp_pos, float opp_rot, b2Vec2 ball_pos) {
+    float m1 = 0.5f;
+    float m2 = 0.5f;
+
+    float dx = ball_pos.x - self_pos.x;
+    float dy = self_pos.y - ball_pos.y;
+
+    float angle = -self_rot;
+    while (angle > pi) angle -= 2*pi;
+    while (angle < -pi) angle += 2*pi;
+
+    float target_angle = atan2(dy, dx);
+
+    float d = atan2(sinf(target_angle-angle), cosf(target_angle-angle));
+
+    m1 -= d;
+    m2 += d;
+
+    return b2Vec2(m1, m2);
+  }
+};
+
 int main() {
 
   b2Vec2 gravity(0.f, 0.f);
@@ -298,6 +325,9 @@ int main() {
     if (ball_position.x > 0.95f && (ball_position.y > 0.2f && ball_position.y < 0.8f)) {
       ball.reset();
     }
+
+    b2Vec2 action = BallChase{}.action(player_bot.body->GetPosition(), player_bot.body->GetAngle(), enemy_bot.body->GetPosition(), enemy_bot.body->GetAngle(), ball.body->GetPosition());
+    Drive(player_bot.body, action.x, action.y);
 
     world.DebugDraw();
     debugDraw.DrawCircle(left_wheel(player_bot.body), 0.005, b2Color(0,0,1), true);
