@@ -1,4 +1,5 @@
 #include "box2d/box2d.h"
+#include <torch/torch.h>
 #include <SFML/Graphics.hpp>
 
 #include <cstdio>
@@ -9,9 +10,16 @@
 
 using std::make_unique;
 using std::unique_ptr;
+using std::make_shared;
+using std::shared_ptr;
 using std::numbers::pi;
 
+// physics parameters
 constexpr int fps = 60;
+constexpr float timeStep = 1.f / (float)fps;
+
+constexpr int velocityIterations = 6;
+constexpr int positionIterations = 2;
 
 // dimensions in pixels
 constexpr float width = 1024;
@@ -32,10 +40,20 @@ constexpr float wall_thickness = 5;
 constexpr float bot_width_f = bot_width / length;
 constexpr float bot_height_f = bot_height / length;
 
+// neural net hyperparameters
+constexpr int hidden_layers = 12;
+constexpr int hidden_nodes = 12;
+
 int randInRange(int lo, int hi) {
   static std::mt19937 gen(std::random_device{}());
 
   return std::uniform_int_distribution<>{lo, hi}(gen);
+}
+
+float randfInRange(float lo, float hi) {
+  static std::mt19937 gen(std::random_device{}());
+
+  return std::uniform_real_distribution<>{lo, hi}(gen);
 }
 
 sf::Color b2ColorToSfColor(b2Color color, int alpha = 255) {
@@ -113,6 +131,29 @@ public:
     b2Vec2 p1 = xf.p;
     DrawSegment(p1, p1 + (line_length * xf.q.GetXAxis()), b2Color(1.f, 0.f, 0.f));
     DrawSegment(p1, p1 - (line_length * xf.q.GetYAxis()), b2Color(0.f, 1.f, 0.f));
+  }
+};
+
+struct RoboNet : torch::nn::Module {
+  torch::nn::Linear layers[hidden_layers+2] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+  torch::Tensor bias[hidden_layers];
+
+  RoboNet() {
+    layers[0] = register_module("input_layer", torch::nn::Linear(8, hidden_nodes));
+    for (int i = 0; i < hidden_layers; i++) {
+      layers[i+1] = register_module("fc" + std::to_string(i+1), torch::nn::Linear(hidden_nodes, hidden_nodes));
+      bias[i] = register_parameter("bias" + std::to_string(i+1), torch::zeros(hidden_nodes));
+    }
+    layers[hidden_layers+1] = register_module("output_layer", torch::nn::Linear(hidden_nodes, 2));
+  }
+
+  torch::Tensor forward(torch::Tensor x) {
+    x = torch::relu(layers[0]->forward(x));
+    for (int i = 0; i < hidden_layers; i++) {
+      x = torch::relu(layers[i+1]->forward(x)) + bias[i];
+    }
+    x = torch::sigmoid(layers[hidden_layers+1]->forward(x));
+    return x;
   }
 };
 
@@ -260,6 +301,47 @@ struct Strategy {
   virtual b2Vec2 action(b2Vec2 self_pos, float self_rot, b2Vec2 opp_pos, float opp_rot, b2Vec2 ball_pos) = 0;
 };
 
+struct AiStrategy : Strategy {
+  shared_ptr<RoboNet> net;
+  shared_ptr<torch::optim::Adam> optimizer;
+
+  AiStrategy() {
+    net = make_shared<RoboNet>();
+    optimizer = make_shared<torch::optim::Adam>(net->parameters());
+  }
+
+  float train(torch::Tensor inputs, torch::Tensor outputs) {
+    optimizer->zero_grad();
+
+    torch::Tensor prediction = net->forward(inputs);
+    torch::Tensor loss = torch::nn::functional::mse_loss(prediction, outputs);
+    loss.backward();
+    optimizer->step();
+
+    return loss.item<float>();
+  }
+
+  b2Vec2 action(b2Vec2 self_pos, float self_rot, b2Vec2 opp_pos, float opp_rot, b2Vec2 ball_pos) {
+    while (self_rot < 0) self_rot += 2*pi;
+    while (self_rot > 2*pi) self_rot -= 2*pi;
+
+    torch::Tensor input = torch::zeros(8);
+    auto input_a = input.accessor<float,1>();
+    input_a[0] = self_pos.x;
+    input_a[1] = self_pos.y;
+    input_a[2] = self_rot;
+    input_a[3] = opp_pos.x;
+    input_a[4] = opp_pos.y;
+    input_a[5] = opp_rot;
+    input_a[6] = ball_pos.x;
+    input_a[7] = ball_pos.y;
+
+    torch::Tensor output = net->forward(input);
+    auto output_a = output.accessor<float,1>();
+    return b2Vec2(output_a[0], output_a[1]);
+  }
+};
+
 struct BallChase : Strategy {
   b2Vec2 action(b2Vec2 self_pos, float self_rot, b2Vec2 opp_pos, float opp_rot, b2Vec2 ball_pos) {
     float m1 = 0.5f;
@@ -279,9 +361,27 @@ struct BallChase : Strategy {
     m1 -= d;
     m2 += d;
 
-    return b2Vec2(m1, m2);
+    return b2Vec2(clamp(m1, -1, 1), clamp(m2, -1, 1));
   }
 };
+
+int step_ballchase(b2World& world, Bot& player, Ball& ball, Strategy& strat) {
+  int hit = 0;
+
+  world.Step(timeStep, velocityIterations, positionIterations);
+
+  b2Vec2 ball_position = ball.body->GetPosition();
+  b2Vec2 player_position = player.body->GetPosition();
+  if ((player_position-ball_position).Length() < (60/length)) {
+    ball.teleport();
+    hit++;
+  }
+
+  b2Vec2 action = strat.action(player_position, player.body->GetAngle(), b2Vec2(0, 0), 0, ball_position);
+  Drive(player.body, action.x, action.y);
+
+  return hit;
+}
 
 int main() {
 
@@ -299,18 +399,53 @@ int main() {
 
   Ball ball(world);
   
-  const float timeStep = 1.f / (float)fps;
-
-  const int velocityIterations = 6;
-  const int positionIterations = 2;
-
   sf::RenderWindow window(sf::VideoMode(width, height), "RoboAI Window", sf::Style::Titlebar);
 
   SfDebugDraw debugDraw(&window);
   world.SetDebugDraw(&debugDraw);
   debugDraw.SetFlags(0x00ff);
 
-  // window.setFramerateLimit(fps);
+  window.setFramerateLimit(fps);
+  
+  auto AiStrat = AiStrategy{};
+  auto SimpleStrat = BallChase{};
+  /*float loss_acc = 0;
+  const int batch_size = 100000;
+  torch::Tensor inputs = torch::randn({batch_size, 8});
+  torch::Tensor outputs = torch::randn({batch_size, 2});
+  auto inputs_a = inputs.accessor<float, 2>();
+  auto outputs_a = outputs.accessor<float, 2>();
+  for (int j = 0;; j++) {
+    for (int i = 0; i < batch_size; i++) {
+      b2Vec2 ball_position = b2Vec2(randfInRange(0, width/length), randfInRange(0, height/length));
+      b2Vec2 player_position = b2Vec2(randfInRange(0, width/length), randfInRange(0, height/length));
+      float angle = randfInRange(0, 2*pi);
+      b2Vec2 action = SimpleStrat.action(player_position, angle, b2Vec2(0, 0), 0, ball_position);
+
+      inputs_a[i][0] = player_position.x;
+      inputs_a[i][1] = player_position.y;
+      inputs_a[i][2] = angle;
+      inputs_a[i][3] = 0;
+      inputs_a[i][4] = 0;
+      inputs_a[i][5] = 0;
+      inputs_a[i][6] = ball_position.x;
+      inputs_a[i][7] = ball_position.y;
+
+      outputs_a[i][0] = action.x;
+      outputs_a[i][1] = action.y;
+    }
+
+    loss_acc += AiStrat.train(inputs, outputs);
+    if (j % 10 == 0) {
+      loss_acc /= 10.0;
+      printf("%d: Loss: %f\n", j, loss_acc);
+      loss_acc = 0;
+      torch::save(AiStrat.net, "models/model_" + std::to_string(j) + ".pt");
+    }
+  }
+
+  return 0;*/
+  torch::load(AiStrat.net, "models/model_1710.pt");
 
   int hits = 0;
   int i = 0;
@@ -334,24 +469,10 @@ int main() {
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       window.close();
+      break;
     }
 
-    world.Step(timeStep, velocityIterations, positionIterations);
-
-    b2Vec2 ball_position = ball.body->GetPosition();
-    b2Vec2 player_position = player_bot.body->GetPosition();
-    if ((player_position-ball_position).Length() < (60/length)) {
-      ball.teleport();
-      hits++;
-      if (hits%10 == 0) printf("Hit %d\n", hits);
-      if (hits == 1000) return 0;
-    }
-    /*if (ball_position.x > 0.95f && (ball_position.y > 0.2f && ball_position.y < 0.8f)) {
-      ball.reset();
-    }*/
-
-    b2Vec2 action = BallChase{}.action(player_position, player_bot.body->GetAngle(), b2Vec2(0, 0), 0, ball_position);
-    Drive(player_bot.body, action.x, action.y);
+    hits += step_ballchase(world, player_bot, ball, AiStrat);
 
     world.DebugDraw();
     debugDraw.DrawCircle(left_wheel(player_bot.body), 0.005, b2Color(0,0,1), true);
