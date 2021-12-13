@@ -8,7 +8,9 @@ find_package(SFML 2.5 COMPONENTS graphics REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(main src/main.cpp)
+include_directories(include/)
+
+add_executable(main src/main.cpp src/agent.cpp src/environment.cpp src/misc.cpp src/visualize.cpp)
 
 target_link_libraries(main PRIVATE box2d)
 target_link_libraries(main PRIVATE sfml-graphics)

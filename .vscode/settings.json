@@ -1,0 +1,16 @@
+{
+  "files.associations": {
+    "random": "cpp",
+    "memory": "cpp",
+    "numbers": "cpp",
+    "__locale": "cpp",
+    "__string": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "*.ipp": "cpp",
+    "cmath": "cpp"
+  },
+  "cmake.configureArgs": [
+    "-DCMAKE_PREFIX_PATH=~/libtorch"
+  ],
+}
