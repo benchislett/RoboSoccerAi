@@ -8,6 +8,7 @@ find_package(SFML 2.5 COMPONENTS graphics REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 
+include_directories(include/ext/ppo)
 include_directories(include/)
 
 add_executable(main src/main.cpp src/agent.cpp src/environment.cpp src/misc.cpp src/visualize.cpp)

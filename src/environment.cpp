@@ -55,7 +55,7 @@ void Bot::drive(float left, float right) {
 
 void BallChaseEnv::reset() {
   player.reset();
-  ball.reset();
+  ball.teleport();
 }
 
 std::array<float, 5> BallChaseEnv::state() const {
@@ -80,6 +80,7 @@ int BallChaseEnv::act(std::array<float, 2> input) {
 
   if (dist() < (60.f / length)) {
     ball.teleport();
+    player.reset();
     return 1;
   } else {
     return 0;
