@@ -7,7 +7,7 @@
 using std::numbers::pi;
 
 // physics parameters
-constexpr int fps        = 60;
+constexpr int fps        = 30;
 constexpr float timeStep = 1.f / (float) fps;
 
 constexpr int velocityIterations = 6;
@@ -16,8 +16,8 @@ constexpr int positionIterations = 2;
 constexpr float power_scale = 1.f / 100.f;
 
 // dimensions in pixels
-constexpr int width  = 1024;
-constexpr int height = 768;
+constexpr int width  = 1024 / 2;
+constexpr int height = 768 / 2;
 
 // pixels per box2d meter
 constexpr float length = 1024;

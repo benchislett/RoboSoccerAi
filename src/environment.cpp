@@ -55,10 +55,10 @@ void Bot::drive(float left, float right) {
 
 void BallChaseEnv::reset() {
   player.reset();
-  ball.reset();
+  ball.teleport();
 }
 
-std::array<float, 5> BallChaseEnv::state() const {
+std::array<float, 6> BallChaseEnv::state() const {
   b2Vec2 player_pos = player.body->GetPosition();
   b2Vec2 ball_pos   = ball.body->GetPosition();
 
@@ -68,22 +68,25 @@ std::array<float, 5> BallChaseEnv::state() const {
   while (player_rot < 0)
     player_rot += 2 * pi;
 
-  return {player_pos.x, player_pos.y, player_rot, ball_pos.x, ball_pos.y};
+  return {player_pos.x, player_pos.y, cosf(player_rot), sinf(player_rot), ball_pos.x, ball_pos.y};
 }
 
 void BallChaseEnv::step() {
   world->Step(timeStep, velocityIterations, positionIterations);
 }
 
-float BallChaseEnv::act(std::array<float, 2> input) {
+float BallChaseEnv::action(std::array<float, 2> input) {
   player.drive(input[0], input[1]);
+
+  float reward = -dist();
+  float hit    = 0;
 
   if (dist() < (60.f / length)) {
     ball.teleport();
-    return 1;
-  } else {
-    return 0;
+    hit = 1;
   }
+
+  return (reward + (hit * 1000.f));
 }
 
 float BallChaseEnv::dist() {

@@ -1,12 +1,14 @@
 #include "agent.hpp"
 
-std::array<float, 2> BallChaseAgent::action(std::array<float, 5> input) {
+std::array<float, 2> BallChaseAgent::action(std::array<float, 6> input) {
   b2Vec2 self_pos(input[0], input[1]);
-  float self_rot = input[2];
-  b2Vec2 ball_pos(input[3], input[4]);
+  float rot_x    = input[2];
+  float rot_y    = input[3];
+  float self_rot = atan2(rot_y, rot_x);
+  b2Vec2 ball_pos(input[4], input[5]);
 
-  float m1 = Kp;
-  float m2 = Kp;
+  float m1 = 0.5f;
+  float m2 = 0.5f;
 
   float dx = ball_pos.x - self_pos.x;
   float dy = self_pos.y - ball_pos.y;

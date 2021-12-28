@@ -14,8 +14,7 @@ int main() {
 
   BallChaseAgent agent(1.0, 0.5);
 
-  int hits = 0;
-  int i    = 0;
+  int i = 0;
 
   auto open = [&]() {
     if (render)
@@ -32,7 +31,8 @@ int main() {
 
     env.step();
 
-    hits += env.act(agent.action(env.state()));
+    float reward = env.action(agent.action(env.state()));
+    printf("Reward: %f\n", reward);
 
     env.update(render);
 

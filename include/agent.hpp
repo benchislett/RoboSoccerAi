@@ -10,5 +10,5 @@ struct BallChaseAgent {
 
   BallChaseAgent(const float p = 1.0, const float d = 0.0) : Kp(p), Kd(d) {}
 
-  std::array<float, 2> action(std::array<float, 5> input);
+  std::array<float, 2> action(std::array<float, 6> input);
 };

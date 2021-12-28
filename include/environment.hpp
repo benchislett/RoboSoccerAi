@@ -148,7 +148,7 @@ struct BlankEnv {
 
   virtual void step() = 0;
 
-  virtual float act(std::array<float, NInput> input) = 0;
+  virtual float action(std::array<float, NInput> input) = 0;
 
   void init(bool render = false) {
     if (render) {
@@ -172,7 +172,7 @@ struct BlankEnv {
   }
 };
 
-struct BallChaseEnv : BlankEnv<5, 2> {
+struct BallChaseEnv : BlankEnv<6, 2> {
   Bot player;
   Ball ball;
 
@@ -180,11 +180,11 @@ struct BallChaseEnv : BlankEnv<5, 2> {
 
   void reset();
 
-  std::array<float, 5> state() const;
+  std::array<float, 6> state() const;
 
   void step();
 
-  float act(std::array<float, 2> input);
+  float action(std::array<float, 2> input);
 
   float dist();
 };
