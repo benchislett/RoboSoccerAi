@@ -2,6 +2,7 @@
 
 #include "box2d/box2d.h"
 #include "misc.hpp"
+#include "visualize.hpp"
 
 #include <memory>
 
@@ -124,7 +125,10 @@ struct VerticalWall {
   }
 };
 
+template <int NState, int NInput>
 struct BlankEnv {
+  unique_ptr<SfDebugDraw> debugDraw;
+  unique_ptr<sf::RenderWindow> window;
   unique_ptr<b2World> world;
   HorizontalWall top_wall;
   HorizontalWall bot_wall;
@@ -132,13 +136,43 @@ struct BlankEnv {
   VerticalWall right_wall;
 
   BlankEnv()
-      : world(make_unique<b2World>(b2Vec2(0.f, 0.f))), top_wall{*world, width / 2, wall_thickness, width},
+      : debugDraw(nullptr), window(nullptr),
+        world(make_unique<b2World>(b2Vec2(0.f, 0.f))), top_wall{*world, width / 2, wall_thickness, width},
         bot_wall{*world, width / 2, height - wall_thickness, width}, left_wall{*world, wall_thickness, height / 2,
                                                                                height},
         right_wall{*world, width - wall_thickness, height / 2, height} {}
+
+  virtual void reset() = 0;
+
+  virtual std::array<float, NState> state() const = 0;
+
+  virtual void step() = 0;
+
+  virtual float act(std::array<float, NInput> input) = 0;
+
+  void init(bool render = false) {
+    if (render) {
+      window = make_unique<sf::RenderWindow>(sf::VideoMode(width, height), "RoboAI Window", sf::Style::Titlebar);
+      window->setFramerateLimit(fps);
+
+      debugDraw = make_unique<SfDebugDraw>(window.get());
+      world->SetDebugDraw(debugDraw.get());
+      debugDraw->SetFlags(0x00ff);
+    }
+
+    reset();
+  }
+
+  void update(bool render = false) {
+    if (render) {
+      window->clear(sf::Color(0, 0, 0));
+      world->DebugDraw();
+      window->display();
+    }
+  }
 };
 
-struct BallChaseEnv : BlankEnv {
+struct BallChaseEnv : BlankEnv<5, 2> {
   Bot player;
   Ball ball;
 
@@ -150,7 +184,7 @@ struct BallChaseEnv : BlankEnv {
 
   void step();
 
-  int act(std::array<float, 2> input);
+  float act(std::array<float, 2> input);
 
   float dist();
 };

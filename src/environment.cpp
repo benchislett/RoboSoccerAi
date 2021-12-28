@@ -75,7 +75,7 @@ void BallChaseEnv::step() {
   world->Step(timeStep, velocityIterations, positionIterations);
 }
 
-int BallChaseEnv::act(std::array<float, 2> input) {
+float BallChaseEnv::act(std::array<float, 2> input) {
   player.drive(input[0], input[1]);
 
   if (dist() < (60.f / length)) {

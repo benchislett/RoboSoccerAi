@@ -5,8 +5,8 @@ std::array<float, 2> BallChaseAgent::action(std::array<float, 5> input) {
   float self_rot = input[2];
   b2Vec2 ball_pos(input[3], input[4]);
 
-  float m1 = 0.5f;
-  float m2 = 0.5f;
+  float m1 = Kp;
+  float m2 = Kp;
 
   float dx = ball_pos.x - self_pos.x;
   float dy = self_pos.y - ball_pos.y;
@@ -21,8 +21,12 @@ std::array<float, 2> BallChaseAgent::action(std::array<float, 5> input) {
 
   float d = atan2(sinf(target_angle - angle), cosf(target_angle - angle));
 
-  m1 -= d;
-  m2 += d;
+  float dd = Kp * d + Kd * (d - prev_d);
+
+  prev_d = d;
+
+  m1 -= dd;
+  m2 += dd;
 
   return {clamp(m1, -1, 1), clamp(m2, -1, 1)};
 }
