@@ -16,8 +16,8 @@ constexpr int positionIterations = 2;
 constexpr float power_scale = 1.f / 100.f;
 
 // dimensions in pixels
-constexpr int width  = 1024 / 2;
-constexpr int height = 768 / 2;
+constexpr int width  = 1024;
+constexpr int height = 768;
 
 // pixels per box2d meter
 constexpr float length = 1024;
