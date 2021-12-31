@@ -9,10 +9,8 @@
 constexpr bool render = true;
 
 int main() {
-  BallChaseEnv env;
+  SoccerEnv env;
   env.init(render);
-
-  BallChaseAgent agent(1.0, 0.5);
 
   int i = 0;
 
@@ -24,6 +22,22 @@ int main() {
   };
 
   while (open()) {
+    std::array<float, 4> action = {0, 0, 0, 0};
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+      action[0] = +1;
+      action[1] = +1;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+      action[0] = -1;
+      action[1] = -1;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+      action[0] = +1;
+      action[1] = -1;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+      action[0] = -1;
+      action[1] = +1;
+    }
+
     if (render && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       env.window->close();
       break;
@@ -31,7 +45,7 @@ int main() {
 
     env.step();
 
-    float reward = env.action(agent.action(env.state()));
+    float reward = env.action(action);
     printf("Reward: %f\n", reward);
 
     env.update(render);

@@ -21,12 +21,12 @@ from imitation.algorithms.adversarial import GAIL
 from imitation.data import rollout
 from imitation.util import logger, util
 
-from env import BallChase
+from env import BallChase, Soccer
 
-MODEL_NAME = "chase_v0"
+MODEL_NAME = "soccer_v0"
 REPLAY_BUFFER_NAME = MODEL_NAME + "_replay_buffer"
 TRAIN_LOG_PATH = "train_logs/" + MODEL_NAME
-TRAIN_STEPS = 1_000_000
+TRAIN_STEPS = 50_000
 TRAIN_EVAL_FREQ = 25_000
 
 
@@ -48,12 +48,12 @@ def new_model(env):
 
 if __name__ == "__main__":
     gym.envs.register(
-        id="BallChase-v0",
-        entry_point="env:BallChase",
-        max_episode_steps=512,
+        id="Soccer-v0",
+        entry_point="env:Soccer",
+        max_episode_steps=1024,
     )
 
-    env = gym.make("BallChase-v0")
+    env = gym.make("Soccer-v0")
 
     n_actions = env.action_space.shape[-1]
     action_noise = NormalActionNoise(

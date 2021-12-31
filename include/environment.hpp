@@ -186,5 +186,22 @@ struct BallChaseEnv : BlankEnv<6, 2> {
 
   float action(std::array<float, 2> input);
 
-  float dist();
+  float dist() const;
+};
+
+struct SoccerEnv : BlankEnv<10, 4> {
+  Bot player1;
+  Bot player2;
+  Ball ball;
+
+  SoccerEnv() : BlankEnv(), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2}, ball{*world} {}
+
+  void reset();
+
+  std::array<float, 10> state() const;
+  std::array<float, 10> mirror_state() const;
+
+  void step();
+
+  float action(std::array<float, 4> input);
 };

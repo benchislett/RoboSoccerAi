@@ -63,10 +63,6 @@ std::array<float, 6> BallChaseEnv::state() const {
   b2Vec2 ball_pos   = ball.body->GetPosition();
 
   float player_rot = player.body->GetAngle();
-  while (player_rot > 2 * pi)
-    player_rot -= 2 * pi;
-  while (player_rot < 0)
-    player_rot += 2 * pi;
 
   return {player_pos.x, player_pos.y, cosf(player_rot), sinf(player_rot), ball_pos.x, ball_pos.y};
 }
@@ -89,6 +85,61 @@ float BallChaseEnv::action(std::array<float, 2> input) {
   return (reward + (hit * 1000.f));
 }
 
-float BallChaseEnv::dist() {
+float BallChaseEnv::dist() const {
   return (player.body->GetPosition() - ball.body->GetPosition()).Length();
+}
+
+void SoccerEnv::reset() {
+  player1.reset();
+  player2.reset();
+  ball.reset();
+}
+
+std::array<float, 10> SoccerEnv::state() const {
+  b2Vec2 player1_pos = player1.body->GetPosition();
+  b2Vec2 player2_pos = player2.body->GetPosition();
+  b2Vec2 ball_pos    = ball.body->GetPosition();
+
+  float player1_rot = player1.body->GetAngle();
+  float player2_rot = player2.body->GetAngle();
+
+  return {player1_pos.x, player1_pos.y,     cosf(player1_rot), sinf(player1_rot), player2_pos.x,
+          player2_pos.y, cosf(player2_rot), sinf(player2_rot), ball_pos.x,        ball_pos.y};
+}
+
+std::array<float, 10> SoccerEnv::mirror_state() const {
+  b2Vec2 player1_pos = player1.body->GetPosition();
+  b2Vec2 player2_pos = player2.body->GetPosition();
+  b2Vec2 ball_pos    = ball.body->GetPosition();
+
+  float player1_rot = pi - player1.body->GetAngle();
+  float player2_rot = pi - player2.body->GetAngle();
+
+  return {1.f - player2_pos.x, player2_pos.y,     cosf(player2_rot), sinf(player2_rot), 1.f - player1_pos.x,
+          player1_pos.y,       cosf(player1_rot), sinf(player1_rot), 1.f - ball_pos.x,  ball_pos.y};
+}
+
+void SoccerEnv::step() {
+  world->Step(timeStep, velocityIterations, positionIterations);
+}
+
+float SoccerEnv::action(std::array<float, 4> input) {
+  player1.drive(input[0], input[1]);
+  player2.drive(input[2], input[3]);
+
+  float player1_to_ball = (player1.body->GetPosition() - ball.body->GetPosition()).Length();
+  float ball_to_net1    = (b2Vec2(0, 0.5) - ball.body->GetPosition()).Length();
+  float ball_to_net2    = (b2Vec2(1, 0.5) - ball.body->GetPosition()).Length();
+
+  float reward = -player1_to_ball - ball_to_net2 + ball_to_net1;
+
+  if (ball_to_net1 < (100.f / length)) {
+    reward -= 1000;
+    reset();
+  } else if (ball_to_net2 < (100.f / length)) {
+    reward += 1000;
+    reset();
+  }
+
+  return reward;
 }
