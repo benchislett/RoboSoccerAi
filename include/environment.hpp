@@ -157,7 +157,11 @@ struct BlankEnv {
 
       debugDraw = make_unique<SfDebugDraw>(window.get());
       world->SetDebugDraw(debugDraw.get());
-      debugDraw->SetFlags(0x00ff);
+      debugDraw->SetFlags(0);
+      debugDraw->AppendFlags(debugDraw->e_aabbBit);
+      debugDraw->AppendFlags(debugDraw->e_centerOfMassBit);
+      debugDraw->AppendFlags(debugDraw->e_shapeBit);
+      debugDraw->AppendFlags(debugDraw->e_jointBit);
     }
 
     reset();

@@ -23,7 +23,7 @@ from imitation.util import logger, util
 
 from env import BallChase, Soccer
 
-MODEL_NAME = "soccer_v0"
+MODEL_NAME = "chase_v0"
 REPLAY_BUFFER_NAME = MODEL_NAME + "_replay_buffer"
 TRAIN_LOG_PATH = "train_logs/" + MODEL_NAME
 TRAIN_STEPS = 50_000

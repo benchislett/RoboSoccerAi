@@ -8,14 +8,16 @@ from train import load_model
 
 from env import BallChase, Soccer
 
+ENV_NAME = "BallChase"
+
 if __name__ == "__main__":
     gym.envs.register(
-        id="Soccer-v0",
-        entry_point="env:Soccer",
+        id=f"{ENV_NAME}-v0",
+        entry_point=f"env:{ENV_NAME}",
         max_episode_steps=512,
     )
 
-    env = gym.make("Soccer-v0")
+    env = gym.make(f"{ENV_NAME}-v0")
 
     model = load_model(env)
 
