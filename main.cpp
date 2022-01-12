@@ -1,9 +1,9 @@
 #include "agent.hpp"
-#include "box2d/box2d.h"
 #include "environment.hpp"
 #include "misc.hpp"
 #include "visualize.hpp"
 
+#include <Box2D/Box2D.h>
 #include <cstdio>
 
 constexpr bool render = true;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "box2d/box2d.h"
 #include "misc.hpp"
 
+#include <Box2D/Box2D.h>
 #include <SFML/Graphics.hpp>
 
 sf::Color b2ColorToSfColor(b2Color color, int alpha = 255);

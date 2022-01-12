@@ -1,10 +1,9 @@
 #pragma once
 
 #include <cmath>
-#include <numbers>
 #include <random>
 
-using std::numbers::pi;
+constexpr double pi = 3.141592653589793238462643383279502884L;
 
 // physics parameters
 constexpr int fps        = 30;

@@ -8,14 +8,9 @@ from torch import nn
 
 import argparse
 
-from stable_baselines3.common.noise import (
-    NormalActionNoise,
-    OrnsteinUhlenbeckActionNoise,
-)
-from stable_baselines3.common.env_checker import check_env
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
-from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3 import PPO, TD3
+from stable_baselines.common.noise import NormalActionNoise
+
+from stable_baselines import PPO, TD3
 
 from env import register_envs, RoboDrive, RoboSoccer
 
@@ -56,8 +51,8 @@ def get_args():
     parser.add_argument('Env')
     parser.add_argument('ModelName')
 
-    parser.add_argument('Iterations', nargs='?', default=50_000, type=int)
-    parser.add_argument('SaveFrequency', nargs='?', default=25_000, type=int)
+    parser.add_argument('Iterations', nargs='?', default=50000, type=int)
+    parser.add_argument('SaveFrequency', nargs='?', default=25000, type=int)
     args = parser.parse_args()
 
     return [args.Env, args.ModelName, args.Iterations, args.SaveFrequency]

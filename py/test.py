@@ -1,8 +1,6 @@
 import gym
 
-from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.vec_env import DummyVecEnv, VecVideoRecorder
-from stable_baselines3 import TD3
+from stable_baselines.common.evaluation import evaluate_policy
 
 from train import load_model
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "box2d/box2d.h"
 #include "misc.hpp"
 #include "visualize.hpp"
 
+#include <Box2D/Box2D.h>
 #include <memory>
 
 using std::make_shared;
@@ -172,7 +172,7 @@ struct BlankEnv {
   void update(bool render = false) {
     if (render) {
       window->clear(sf::Color(0, 0, 0));
-      world->DebugDraw();
+      world->DrawDebugData();
       debug_draw();
       window->display();
     }
