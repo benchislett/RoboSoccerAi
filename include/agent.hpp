@@ -3,12 +3,12 @@
 
 #include <array>
 
-struct BallChaseAgent {
+struct DriveAgent {
   float Kp, Kd;
 
   float prev_d;
 
-  BallChaseAgent(const float p = 1.0, const float d = 0.0) : Kp(p), Kd(d) {}
+  DriveAgent(const float p = 1.0, const float d = 0.0) : Kp(p), Kd(d) {}
 
   std::array<float, 2> action(std::array<float, 6> input);
 };

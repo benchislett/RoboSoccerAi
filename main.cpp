@@ -9,7 +9,7 @@
 constexpr bool render = true;
 
 int main() {
-  SoccerEnv env;
+  DriveEnv env;
   env.init(render);
 
   int i = 0;
@@ -22,7 +22,7 @@ int main() {
   };
 
   while (open()) {
-    std::array<float, 4> action = {0, 0, 0, 0};
+    std::array<float, 2> action = {0, 0};
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
       action[0] = +1;
@@ -45,8 +45,10 @@ int main() {
 
     env.step();
 
-    float reward = env.action(action);
-    printf("Reward: %f\n", reward);
+    auto state = env.state();
+
+    env.action(action);
+    printf("State: %f, %f, %f, %f, %f, %f\n", state[0], state[1], state[2], state[3], state[4], state[5]);
 
     env.update(render);
 

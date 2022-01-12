@@ -1,6 +1,6 @@
 #include "agent.hpp"
 
-std::array<float, 2> BallChaseAgent::action(std::array<float, 6> input) {
+std::array<float, 2> DriveAgent::action(std::array<float, 6> input) {
   b2Vec2 self_pos(input[0], input[1]);
   float rot_x    = input[2];
   float rot_y    = input[3];

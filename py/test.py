@@ -6,22 +6,36 @@ from stable_baselines3 import TD3
 
 from train import load_model
 
-from env import BallChase, Soccer
+import argparse
 
-ENV_NAME = "BallChase"
+from env import register_envs, RoboDrive, RoboSoccer
 
-if __name__ == "__main__":
-    gym.envs.register(
-        id=f"{ENV_NAME}-v0",
-        entry_point=f"env:{ENV_NAME}",
-        max_episode_steps=512,
+def get_args():
+    parser = argparse.ArgumentParser(
+        usage="%(prog)s Env ModelName",
+        description="""
+        Evaluate a model on the RoboDrive or RoboSoccer environment.
+
+        Loads ModelName, which must have been saved after training (see train.py)
+        """
     )
 
-    env = gym.make(f"{ENV_NAME}-v0")
+    parser.add_argument('Env')
+    parser.add_argument('ModelName')
+    args = parser.parse_args()
 
-    model = load_model(env)
+    return [args.Env, args.ModelName]
 
-    reward, std = evaluate_policy(model, env, n_eval_episodes=32)
+if __name__ == "__main__":
+    register_envs()
+
+    env_name, model_name = get_args()
+
+    env = gym.make(env_name + "-v0")
+
+    model = load_model(model_name, env, train=False)
+
+    reward, std = evaluate_policy(model, env, n_eval_episodes=16)
     print("mean_reward:", reward, "+/-", std)
 
     evaluate_policy(model, env, n_eval_episodes=5, render=True)

@@ -2,6 +2,11 @@
 
 #include <numbers>
 
+b2Vec2 random_pos() {
+  int pad = 2 * wall_thickness + ball_radius;
+  return b2Vec2((float) randInRange(pad, width - pad) / length, (float) randInRange(pad, height - pad) / length);
+}
+
 b2Vec2 left_wheel(b2Body* body) {
   b2Vec2 pos     = body->GetPosition();
   float rot      = -body->GetAngle();
@@ -25,8 +30,7 @@ void Ball::reset() {
 }
 
 void Ball::teleport() {
-  int pad = 2 * wall_thickness + ball_radius;
-  setPosition(randInRange(pad, width - pad), randInRange(pad, height - pad));
+  body->SetTransform(random_pos(), 0.f);
 }
 
 void Bot::setPosition(int x, int y) {
@@ -53,40 +57,53 @@ void Bot::drive(float left, float right) {
   body->ApplyForce(right_force, right_wheel(body), true);
 }
 
-void BallChaseEnv::reset() {
-  player.reset();
-  ball.teleport();
+void DriveEnv::debug_draw() {
+  debugDraw->DrawPoint(b2Vec2(target_x, target_y), 20, b2Color(0, 5, 0));
 }
 
-std::array<float, 6> BallChaseEnv::state() const {
+void DriveEnv::reset() {
+  player.reset();
+
+  scramble();
+
+  // target_x = width / length / 2.f;
+  // target_y = height / length / 2.f;
+}
+
+void DriveEnv::scramble() {
+  b2Vec2 target = random_pos();
+
+  target_x = target.x;
+  target_y = target.y;
+}
+
+std::array<float, 6> DriveEnv::state() const {
   b2Vec2 player_pos = player.body->GetPosition();
-  b2Vec2 ball_pos   = ball.body->GetPosition();
 
   float player_rot = player.body->GetAngle();
 
-  return {player_pos.x, player_pos.y, cosf(player_rot), sinf(player_rot), ball_pos.x, ball_pos.y};
+  return {player_pos.x, player_pos.y, cosf(player_rot), sinf(player_rot), target_x, target_y};
 }
 
-void BallChaseEnv::step() {
+void DriveEnv::step() {
   world->Step(timeStep, velocityIterations, positionIterations);
 }
 
-float BallChaseEnv::action(std::array<float, 2> input) {
+float DriveEnv::action(std::array<float, 2> input) {
   player.drive(input[0], input[1]);
 
-  float reward = -dist();
-  float hit    = 0;
+  float hit = 0;
 
-  if (dist() < (60.f / length)) {
-    ball.teleport();
+  if (dist() < (50.f / length)) {
+    scramble();
     hit = 1;
   }
 
-  return (reward + (hit * 1000.f));
+  return hit;
 }
 
-float BallChaseEnv::dist() const {
-  return (player.body->GetPosition() - ball.body->GetPosition()).Length();
+float DriveEnv::dist() const {
+  return (player.body->GetPosition() - b2Vec2(target_x, target_y)).Length();
 }
 
 void SoccerEnv::reset() {
@@ -127,19 +144,18 @@ float SoccerEnv::action(std::array<float, 4> input) {
   player1.drive(input[0], input[1]);
   player2.drive(input[2], input[3]);
 
-  float player1_to_ball = (player1.body->GetPosition() - ball.body->GetPosition()).Length();
-  float ball_to_net1    = (b2Vec2(0, 0.5) - ball.body->GetPosition()).Length();
-  float ball_to_net2    = (b2Vec2(1, 0.5) - ball.body->GetPosition()).Length();
+  float ball_to_net1 = (b2Vec2(0, 0.5) - ball.body->GetPosition()).Length();
+  float ball_to_net2 = (b2Vec2(1, 0.5) - ball.body->GetPosition()).Length();
 
-  float reward = -player1_to_ball - ball_to_net2 + ball_to_net1;
+  int hit = 0;
 
   if (ball_to_net1 < (100.f / length)) {
-    reward -= 1000;
+    hit = -1;
     reset();
   } else if (ball_to_net2 < (100.f / length)) {
-    reward += 1000;
+    hit = 1;
     reset();
   }
 
-  return reward;
+  return hit;
 }

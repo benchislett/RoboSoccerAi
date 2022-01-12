@@ -69,8 +69,8 @@ struct Bot {
     body_def = make_unique<b2BodyDef>();
     body_def->position.Set((float) spawn_x / length, (float) spawn_y / length);
     body_def->type           = b2_dynamicBody;
-    body_def->linearDamping  = 3.f;
-    body_def->angularDamping = 3.f;
+    body_def->linearDamping  = 8.f;
+    body_def->angularDamping = 8.f;
 
     body = world.CreateBody(body_def.get());
     body->CreateFixture(fixture.get());
@@ -150,6 +150,8 @@ struct BlankEnv {
 
   virtual float action(std::array<float, NInput> input) = 0;
 
+  virtual void debug_draw() = 0;
+
   void init(bool render = false) {
     if (render) {
       window = make_unique<sf::RenderWindow>(sf::VideoMode(width, height), "RoboAI Window", sf::Style::Titlebar);
@@ -171,18 +173,23 @@ struct BlankEnv {
     if (render) {
       window->clear(sf::Color(0, 0, 0));
       world->DebugDraw();
+      debug_draw();
       window->display();
     }
   }
 };
 
-struct BallChaseEnv : BlankEnv<6, 2> {
+struct DriveEnv : BlankEnv<6, 2> {
   Bot player;
-  Ball ball;
+  float target_x, target_y;
 
-  BallChaseEnv() : BlankEnv(), player{*world, 100, height / 2}, ball{*world} {}
+  DriveEnv() : BlankEnv(), player{*world, 100, height / 2}, target_x(0.5), target_y(0.5) {}
+
+  void debug_draw();
 
   void reset();
+
+  void scramble();
 
   std::array<float, 6> state() const;
 
@@ -199,6 +206,8 @@ struct SoccerEnv : BlankEnv<10, 4> {
   Ball ball;
 
   SoccerEnv() : BlankEnv(), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2}, ball{*world} {}
+
+  void debug_draw() {}
 
   void reset();
 
