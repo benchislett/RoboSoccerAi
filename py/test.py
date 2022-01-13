@@ -1,6 +1,7 @@
 import gym
 
 from stable_baselines.common.evaluation import evaluate_policy
+from stable_baselines.common import make_vec_env
 
 from train import load_model
 
@@ -29,7 +30,7 @@ if __name__ == "__main__":
 
     env_name, model_name = get_args()
 
-    env = gym.make(env_name + "-v0")
+    env = make_vec_env(env_name + "-v0", n_envs=1)
 
     model = load_model(model_name, env, train=False)
 

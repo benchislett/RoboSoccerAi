@@ -4,9 +4,6 @@ import numpy as np
 
 import gym
 
-from torch import nn
-
-
 class RoboDrive(gym.Env):
     metadata = {"render.modes": ["human"]}
 
