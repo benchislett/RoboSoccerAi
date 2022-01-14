@@ -7,7 +7,7 @@
 using std::numbers::pi;
 
 // physics parameters
-constexpr int fps        = 30;
+constexpr int fps        = 12;
 constexpr float timeStep = 1.f / (float) fps;
 
 constexpr int velocityIterations = 6;

@@ -1,8 +1,6 @@
 import gym
 
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.vec_env import DummyVecEnv, VecVideoRecorder
-from stable_baselines3 import TD3
 
 from train import load_model
 
@@ -24,14 +22,14 @@ def get_args():
     parser.add_argument('ModelName')
     args = parser.parse_args()
 
-    return [args.Env, args.ModelName]
+    return [args.Env + "-v0", args.ModelName]
 
 if __name__ == "__main__":
     register_envs()
 
     env_name, model_name = get_args()
 
-    env = gym.make(env_name + "-v0")
+    env = gym.make(env_name)
 
     model = load_model(model_name, env, train=False)
 
