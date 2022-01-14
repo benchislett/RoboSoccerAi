@@ -207,7 +207,7 @@ struct SoccerEnv : BlankEnv<10, 4> {
 
   SoccerEnv() : BlankEnv(), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2}, ball{*world} {}
 
-  void debug_draw() {}
+  void debug_draw();
 
   void reset();
 

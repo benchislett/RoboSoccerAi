@@ -9,13 +9,13 @@
 constexpr bool render = true;
 
 int main() {
-  DriveEnv env;
+  SoccerEnv env;
   env.init(render);
 
   float reward = 0;
 
   for (int i = 0; i < 1024; i++) {
-    std::array<float, 2> action = {0, 0};
+    std::array<float, 4> action = {0, 0, 1, 0};
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
       action[0] = +1;
@@ -36,22 +36,12 @@ int main() {
       break;
     }
 
-    float prev_dist = env.dist();
     env.step();
-    float new_dist = env.dist();
-
 
     float hit = env.action(action);
 
-    // auto state = env.state();
-    // printf("State: %f, %f, %f, %f, %f, %f\n", state[0], state[1], state[2], state[3], state[4], state[5]);
-
-    reward += 10 * ((prev_dist - new_dist) + hit);
-
     env.update(render);
   }
-
-  printf("Reward: %f\n", reward);
 
   return 0;
 }

@@ -106,6 +106,25 @@ float DriveEnv::dist() const {
   return (player.body->GetPosition() - b2Vec2(target_x, target_y)).Length();
 }
 
+void SoccerEnv::debug_draw() {
+  float midline = height / 2.f;
+
+  std::array<b2Vec2, 4> net1 = {b2Vec2(wall_thickness / length, (midline + (net_height / 2)) / length),
+                                b2Vec2((wall_thickness + net_width) / length, (midline + (net_height / 2)) / length),
+                                b2Vec2((wall_thickness + net_width) / length, (midline - (net_height / 2)) / length),
+                                b2Vec2(wall_thickness / length, (midline - (net_height / 2)) / length)};
+
+  std::array<b2Vec2, 4> net2 = {
+      b2Vec2((width - wall_thickness) / length, (midline + (net_height / 2)) / length),
+      b2Vec2((width - wall_thickness - net_width) / length, (midline + (net_height / 2)) / length),
+      b2Vec2((width - wall_thickness - net_width) / length, (midline - (net_height / 2)) / length),
+      b2Vec2((width - wall_thickness) / length, (midline - (net_height / 2)) / length)};
+
+
+  debugDraw->DrawSolidPolygon(net1.begin(), 4, b2Color(0, 1, 0, 0.2f));
+  debugDraw->DrawSolidPolygon(net2.begin(), 4, b2Color(0, 1, 0, 0.2f));
+}
+
 void SoccerEnv::reset() {
   player1.reset();
   player2.reset();
@@ -144,17 +163,20 @@ float SoccerEnv::action(std::array<float, 4> input) {
   player1.drive(input[0], input[1]);
   player2.drive(input[2], input[3]);
 
-  float ball_to_net1 = (b2Vec2(0, 0.5) - ball.body->GetPosition()).Length();
-  float ball_to_net2 = (b2Vec2(1, 0.5) - ball.body->GetPosition()).Length();
+  b2Vec2 ball_pos = ball.body->GetPosition();
+
+  float midline = height / 2.f;
 
   int hit = 0;
 
-  if (ball_to_net1 < (100.f / length)) {
-    hit = -1;
-    reset();
-  } else if (ball_to_net2 < (100.f / length)) {
-    hit = 1;
-    reset();
+  if (ball_pos.y < (midline + (net_height / 2.f)) / length && ball_pos.y > (midline - (net_height / 2)) / length) {
+    if (ball_pos.x < (wall_thickness + net_width) / length) {
+      hit = -1;
+      reset();
+    } else if (ball_pos.x > (width - wall_thickness - net_width) / length) {
+      hit = 1;
+      reset();
+    }
   }
 
   return hit;

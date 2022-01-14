@@ -27,6 +27,8 @@ constexpr int bot_width      = 70;
 constexpr int bot_height     = 30;
 constexpr int ball_radius    = 10;
 constexpr int wall_thickness = 5;
+constexpr int net_width      = 40;
+constexpr int net_height     = 175;
 
 // dimension in box2d
 constexpr float bot_width_f  = bot_width / length;

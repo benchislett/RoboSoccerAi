@@ -5,7 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 
-sf::Color b2ColorToSfColor(b2Color color, int alpha = 255);
+sf::Color b2ColorToSfColor(b2Color color);
 
 class SfDebugDraw : public b2Draw {
   sf::RenderWindow* window;
@@ -21,7 +21,7 @@ class SfDebugDraw : public b2Draw {
       b2Vec2 vertex = vertices[i];
       poly.setPoint(i, sf::Vector2f(vertex.x * length, vertex.y * length));
     }
-    poly.setOutlineColor(b2ColorToSfColor(color, 50));
+    poly.setOutlineColor(b2ColorToSfColor(color));
     if (fill) {
       poly.setFillColor(b2ColorToSfColor(color));
     } else {
@@ -43,7 +43,7 @@ class SfDebugDraw : public b2Draw {
     sf::CircleShape c(r);
     c.setOrigin(r, r);
     c.setPosition(center.x * length, center.y * length);
-    c.setOutlineColor(b2ColorToSfColor(color, 50));
+    c.setOutlineColor(b2ColorToSfColor(color));
     if (fill) {
       c.setFillColor(b2ColorToSfColor(color));
     } else {
