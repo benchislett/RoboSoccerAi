@@ -160,8 +160,15 @@ void SoccerEnv::step() {
 }
 
 float SoccerEnv::action(std::array<float, 4> input) {
-  player1.drive(input[0], input[1]);
-  player2.drive(input[2], input[3]);
+  auto current_state = state();
+
+  auto player1_action =
+      controller({current_state[0], current_state[1], current_state[2], current_state[3], input[0], input[1]});
+  auto player2_action =
+      controller({current_state[4], current_state[5], current_state[6], current_state[7], input[2], input[3]});
+
+  player1.drive(player1_action[0], player1_action[1]);
+  player2.drive(player2_action[0], player2_action[1]);
 
   b2Vec2 ball_pos = ball.body->GetPosition();
 
@@ -180,4 +187,20 @@ float SoccerEnv::action(std::array<float, 4> input) {
   }
 
   return hit;
+}
+
+float SoccerEnv::dist_player1_ball() const {
+  return (player1.body->GetPosition() - ball.body->GetPosition()).Length();
+}
+
+float SoccerEnv::dist_player2_ball() const {
+  return (player2.body->GetPosition() - ball.body->GetPosition()).Length();
+}
+
+float SoccerEnv::dist_ball_net1() const {
+  return (b2Vec2(0, height / length / 2.f) - ball.body->GetPosition()).Length();
+}
+
+float SoccerEnv::dist_ball_net2() const {
+  return (b2Vec2(width / length, height / length / 2.f) - ball.body->GetPosition()).Length();
 }

@@ -9,7 +9,9 @@
 constexpr bool render = true;
 
 int main() {
-  SoccerEnv env;
+  DriveAgent agent;
+
+  SoccerEnv env([&](auto input) { return agent.action(input); });
   env.init(render);
 
   float reward = 0;

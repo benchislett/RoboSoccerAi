@@ -98,6 +98,7 @@
     "locale": "cpp",
     "queue": "cpp",
     "stack": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "slist": "cpp"
   },
 }

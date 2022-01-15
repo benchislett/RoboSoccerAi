@@ -26,7 +26,7 @@ class RoboDrive(gym.Env):
         self.raw_env.step()
         new_dist = self.raw_env.dist()
 
-        reward = 10 * ((prev_dist - new_dist) + hit)
+        reward = ((prev_dist - new_dist) + hit)
 
         obs = np.asarray(self.raw_env.state(), dtype=np.float32)
 
@@ -54,18 +54,21 @@ class RoboSoccer(gym.Env):
     def __init__(self):
         super(RoboSoccer, self).__init__()
 
-        self.raw_env = robopy.SoccerEnv()
+        self.raw_agent = robopy.DriveAgent(1.0, 0.0)
+        self.raw_env = robopy.SoccerEnv(self.raw_agent.action)
         self.inited = False
 
         self.action_space = gym.spaces.Box(-1, 1, (2,), dtype=np.float32)
         self.observation_space = gym.spaces.Box(-1, 1, (10,), dtype=np.float32)
 
     def step(self, action):
-        hit = self.raw_env.action([action[0], action[1], 0, 0])
+        hit = self.raw_env.action([action[0], action[1], 1, 0])
 
+        prev_dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
         self.raw_env.step()
+        new_dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
 
-        reward = hit * 1000
+        reward = (prev_dist - new_dist) + 100 * hit
 
         obs = np.asarray(self.raw_env.state(), dtype=np.float32)
 

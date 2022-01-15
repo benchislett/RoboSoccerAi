@@ -4,6 +4,7 @@
 #include "misc.hpp"
 #include "visualize.hpp"
 
+#include <functional>
 #include <memory>
 
 using std::make_shared;
@@ -200,12 +201,19 @@ struct DriveEnv : BlankEnv<6, 2> {
   float dist() const;
 };
 
+using DriveEnvAgent = std::function<std::array<float, 2>(std::array<float, 6>)>;
+
 struct SoccerEnv : BlankEnv<10, 4> {
+  DriveEnvAgent controller;
+
   Bot player1;
   Bot player2;
   Ball ball;
 
-  SoccerEnv() : BlankEnv(), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2}, ball{*world} {}
+
+  SoccerEnv(const DriveEnvAgent& agent)
+      : BlankEnv(),
+        controller(agent), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2}, ball{*world} {}
 
   void debug_draw();
 
@@ -217,4 +225,9 @@ struct SoccerEnv : BlankEnv<10, 4> {
   void step();
 
   float action(std::array<float, 4> input);
+
+  float dist_player1_ball() const;
+  float dist_player2_ball() const;
+  float dist_ball_net1() const;
+  float dist_ball_net2() const;
 };
