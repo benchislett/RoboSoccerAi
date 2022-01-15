@@ -6,6 +6,13 @@ import gym
 
 from torch import nn
 
+from net import load_model
+
+opponent_agent = None
+
+def set_opponent_agent(ag):
+    global opponent_agent
+    opponent_agent = ag
 
 class RoboDrive(gym.Env):
     metadata = {"render.modes": ["human"]}
@@ -47,7 +54,6 @@ class RoboDrive(gym.Env):
 
         self.raw_env.update(True)
 
-
 class RoboSoccer(gym.Env):
     metadata = {"render.modes": ["human"]}
 
@@ -62,7 +68,10 @@ class RoboSoccer(gym.Env):
         self.observation_space = gym.spaces.Box(-1, 1, (10,), dtype=np.float32)
 
     def step(self, action):
-        hit = self.raw_env.action([action[0], action[1], 1, 0])
+        opp_action = opponent_agent.predict(np.asarray(self.raw_env.mirror_state(), dtype=np.float32))[0]
+
+        hit = self.raw_env.action([action[0], action[1], 1 - opp_action[0], opp_action[1]])
+        hit = self.raw_env.action([action[0], action[1], 0, 0])
 
         prev_dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
         self.raw_env.step()

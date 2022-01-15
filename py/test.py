@@ -2,11 +2,11 @@ import gym
 
 from stable_baselines3.common.evaluation import evaluate_policy
 
-from train import load_model
+from net import load_model
 
 import argparse
 
-from env import register_envs, RoboDrive, RoboSoccer
+from env import register_envs, RoboDrive, RoboSoccer, set_opponent_agent
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -32,6 +32,8 @@ if __name__ == "__main__":
     env = gym.make(env_name)
 
     model = load_model(model_name, env, train=False)
+
+    set_opponent_agent(model)
 
     reward, std = evaluate_policy(model, env, n_eval_episodes=16)
     print("mean_reward:", reward, "+/-", std)

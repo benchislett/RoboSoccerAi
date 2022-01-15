@@ -57,8 +57,9 @@ struct Bot {
   b2Body* body;
 
   int spawn_x, spawn_y;
+  float spawn_rot;
 
-  Bot(b2World& world, int sx, int sy) : spawn_x(sx), spawn_y(sy) {
+  Bot(b2World& world, int sx, int sy, float sr = 0.f) : spawn_x(sx), spawn_y(sy), spawn_rot(sr) {
     shape = make_unique<b2PolygonShape>();
     shape->SetAsBox(bot_width_f / 2.f, bot_height_f / 2.f);
 
@@ -77,7 +78,7 @@ struct Bot {
     body->CreateFixture(fixture.get());
   }
 
-  void setPosition(int x, int y);
+  void setState(int x, int y, float rot = 0);
 
   void reset();
 
@@ -212,8 +213,8 @@ struct SoccerEnv : BlankEnv<10, 4> {
 
 
   SoccerEnv(const DriveEnvAgent& agent)
-      : BlankEnv(),
-        controller(agent), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2}, ball{*world} {}
+      : BlankEnv(), controller(agent), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2, -pi},
+        ball{*world} {}
 
   void debug_draw();
 

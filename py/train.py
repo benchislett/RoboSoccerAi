@@ -10,20 +10,10 @@ import argparse
 
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3 import PPO, TD3
 
-from env import register_envs, RoboDrive, RoboSoccer
+from net import log_path, load_model, new_model
 
-def log_path(model_name):
-    return "train_logs/" + model_name
-
-def load_model(model_name, env, train=True):
-    model = PPO.load(model_name, env)
-    return model
-
-def new_model(env):
-    model = PPO("MlpPolicy", env, verbose=1)
-    return model
+from env import register_envs, RoboDrive, RoboSoccer, set_opponent_agent
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -56,6 +46,8 @@ if __name__ == "__main__":
         model = load_model(model_name, env)
     except FileNotFoundError:
         model = new_model(env)
+
+    set_opponent_agent(model)
 
     model.learn(
         total_timesteps=iterations,

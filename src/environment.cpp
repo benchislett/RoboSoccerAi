@@ -33,12 +33,12 @@ void Ball::teleport() {
   body->SetTransform(random_pos(), 0.f);
 }
 
-void Bot::setPosition(int x, int y) {
-  body->SetTransform(b2Vec2(x / length, y / length), 0.f);
+void Bot::setState(int x, int y, float rot) {
+  body->SetTransform(b2Vec2(x / length, y / length), rot);
 }
 
 void Bot::reset() {
-  setPosition(spawn_x, spawn_y);
+  setState(spawn_x, spawn_y, spawn_rot);
 }
 
 void Bot::drive(float left, float right) {
@@ -148,11 +148,11 @@ std::array<float, 10> SoccerEnv::mirror_state() const {
   b2Vec2 player2_pos = player2.body->GetPosition();
   b2Vec2 ball_pos    = ball.body->GetPosition();
 
-  float player1_rot = pi - player1.body->GetAngle();
-  float player2_rot = pi - player2.body->GetAngle();
+  float player1_rot = player1.body->GetAngle();
+  float player2_rot = player2.body->GetAngle();
 
-  return {1.f - player2_pos.x, player2_pos.y,     cosf(player2_rot), sinf(player2_rot), 1.f - player1_pos.x,
-          player1_pos.y,       cosf(player1_rot), sinf(player1_rot), 1.f - ball_pos.x,  ball_pos.y};
+  return {1.f - player2_pos.x, player2_pos.y,      -cosf(player2_rot), sinf(player2_rot), 1.f - player1_pos.x,
+          player1_pos.y,       -cosf(player1_rot), sinf(player1_rot),  1.f - ball_pos.x,  ball_pos.y};
 }
 
 void SoccerEnv::step() {
@@ -169,6 +169,24 @@ float SoccerEnv::action(std::array<float, 4> input) {
 
   player1.drive(player1_action[0], player1_action[1]);
   player2.drive(player2_action[0], player2_action[1]);
+
+  /* Manual Control Mode
+  std::array<float, 2> manual_action = {0, 0};
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+    manual_action[0] = +1;
+    manual_action[1] = +1;
+  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+    manual_action[0] = -1;
+    manual_action[1] = -1;
+  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+    manual_action[0] = +1;
+    manual_action[1] = -1;
+  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+    manual_action[0] = -1;
+    manual_action[1] = +1;
+  }
+
+  player2.drive(manual_action[0], manual_action[1]);*/
 
   b2Vec2 ball_pos = ball.body->GetPosition();
 
