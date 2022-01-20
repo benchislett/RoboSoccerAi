@@ -11,38 +11,36 @@ constexpr bool render = true;
 int main() {
   DriveAgent agent;
 
+  SoccerAgent opponent;
+
   SoccerEnv env([&](auto input) { return agent.action(input); });
   env.init(render);
 
   float reward = 0;
 
   for (int i = 0; i < 1024; i++) {
-    std::array<float, 4> action = {0, 0, 1, 0};
+    std::array<float, 2> action;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-      action[0] = +1;
-      action[1] = +1;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-      action[0] = -1;
-      action[1] = -1;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-      action[0] = +1;
-      action[1] = -1;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-      action[0] = -1;
-      action[1] = +1;
-    }
+    auto [mx, my] = sf::Mouse::getPosition(*env.window);
+    float mxf     = clamp(mx, 0, width) / length;
+    float myf     = clamp(my, 0, height) / length;
+
+    action = {mxf, myf};
 
     if (render && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       env.window->close();
       break;
     }
 
+    auto opponent_action = opponent.action(env.mirror_state());
+
     env.step();
 
-    float hit = env.action(action);
+    float hit = env.action({action[0], action[1], 1 - opponent_action[0], opponent_action[1]});
 
     env.update(render);
+
+    reward += hit;
   }
 
   return 0;
