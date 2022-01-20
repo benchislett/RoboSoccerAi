@@ -12,3 +12,7 @@ struct DriveAgent {
 
   std::array<float, 2> action(std::array<float, 6> input);
 };
+
+struct SoccerAgent {
+  std::array<float, 2> action(std::array<float, 10> input);
+};
