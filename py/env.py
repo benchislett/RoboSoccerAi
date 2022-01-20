@@ -8,12 +8,6 @@ from torch import nn
 
 from net import load_model
 
-opponent_agent = None
-
-def set_opponent_agent(ag):
-    global opponent_agent
-    opponent_agent = ag
-
 class RoboDrive(gym.Env):
     metadata = {"render.modes": ["human"]}
 
@@ -29,11 +23,10 @@ class RoboDrive(gym.Env):
     def step(self, action):
         hit = self.raw_env.action([action[0], action[1]])
 
-        prev_dist = self.raw_env.dist()
         self.raw_env.step()
-        new_dist = self.raw_env.dist()
+        dist = self.raw_env.dist()
 
-        reward = ((prev_dist - new_dist) + hit)
+        reward = -dist + 100 * hit
 
         obs = np.asarray(self.raw_env.state(), dtype=np.float32)
 
@@ -62,22 +55,21 @@ class RoboSoccer(gym.Env):
 
         self.raw_agent = robopy.DriveAgent(1.0, 0.0)
         self.raw_env = robopy.SoccerEnv(self.raw_agent.action)
+        self.opponent = robopy.SoccerAgent()
         self.inited = False
 
         self.action_space = gym.spaces.Box(-1, 1, (2,), dtype=np.float32)
         self.observation_space = gym.spaces.Box(-1, 1, (10,), dtype=np.float32)
 
     def step(self, action):
-        opp_action = opponent_agent.predict(np.asarray(self.raw_env.mirror_state(), dtype=np.float32))[0]
+        opp_action = self.opponent.action(np.asarray(self.raw_env.mirror_state(), dtype=np.float32))
 
         hit = self.raw_env.action([action[0], action[1], 1 - opp_action[0], opp_action[1]])
-        hit = self.raw_env.action([action[0], action[1], 0, 0])
 
-        prev_dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
         self.raw_env.step()
-        new_dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
+        dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
 
-        reward = (prev_dist - new_dist) + 100 * hit
+        reward = -dist + 10000 * hit
 
         obs = np.asarray(self.raw_env.state(), dtype=np.float32)
 
@@ -108,5 +100,5 @@ def register_envs():
     gym.envs.register(
         id="RoboSoccer-v0",
         entry_point=RoboSoccer,
-        max_episode_steps=2048,
+        max_episode_steps=1024,
     )

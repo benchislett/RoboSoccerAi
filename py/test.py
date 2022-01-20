@@ -6,7 +6,7 @@ from net import load_model
 
 import argparse
 
-from env import register_envs, RoboDrive, RoboSoccer, set_opponent_agent
+from env import register_envs, RoboDrive, RoboSoccer
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -32,8 +32,6 @@ if __name__ == "__main__":
     env = gym.make(env_name)
 
     model = load_model(model_name, env, train=False)
-
-    set_opponent_agent(model)
 
     reward, std = evaluate_policy(model, env, n_eval_episodes=16)
     print("mean_reward:", reward, "+/-", std)

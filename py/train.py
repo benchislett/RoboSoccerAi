@@ -13,7 +13,7 @@ from stable_baselines3.common.env_util import make_vec_env
 
 from net import log_path, load_model, new_model
 
-from env import register_envs, RoboDrive, RoboSoccer, set_opponent_agent
+from env import register_envs, RoboDrive, RoboSoccer
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -30,7 +30,7 @@ def get_args():
     parser.add_argument('ModelName')
 
     parser.add_argument('Iterations', nargs='?', default=50_000, type=int)
-    parser.add_argument('SaveFrequency', nargs='?', default=25_000, type=int)
+    parser.add_argument('SaveFrequency', nargs='?', default=-1, type=int)
     args = parser.parse_args()
 
     return [args.Env + "-v0", args.ModelName, args.Iterations, args.SaveFrequency]
@@ -46,8 +46,6 @@ if __name__ == "__main__":
         model = load_model(model_name, env)
     except FileNotFoundError:
         model = new_model(env)
-
-    set_opponent_agent(model)
 
     model.learn(
         total_timesteps=iterations,
