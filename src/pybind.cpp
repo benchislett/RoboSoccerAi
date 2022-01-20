@@ -37,4 +37,5 @@ PYBIND11_MODULE(robopy, m) {
 
 
   py::class_<DriveAgent>(m, "DriveAgent").def(py::init<py::float_, py::float_>()).def("action", &DriveAgent::action);
+  py::class_<SoccerAgent>(m, "SoccerAgent").def(py::init<>()).def("action", &SoccerAgent::action);
 }

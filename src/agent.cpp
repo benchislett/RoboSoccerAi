@@ -32,3 +32,16 @@ std::array<float, 2> DriveAgent::action(std::array<float, 6> input) {
 
   return {clamp(m1, -1, 1), clamp(m2, -1, 1)};
 }
+
+std::array<float, 2> SoccerAgent::action(std::array<float, 10> input) {
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by] = input;
+
+  b2Vec2 our_net(0, height / length / 2.f);
+  b2Vec2 ball(bx, by);
+
+  b2Vec2 target = (our_net + ball);
+  target.x /= 2.f;
+  target.y /= 2.f;
+
+  return {target.x, target.y};
+}
