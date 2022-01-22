@@ -216,6 +216,8 @@ struct SoccerEnv : BlankEnv<10, 4> {
       : BlankEnv(), controller(agent), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2, -pi},
         ball{*world} {}
 
+  void set_controller(const DriveEnvAgent& agent);
+
   void debug_draw();
 
   void reset();

@@ -103,6 +103,10 @@ float DriveEnv::dist() const {
   return (player.body->GetPosition() - b2Vec2(target_x, target_y)).Length();
 }
 
+void SoccerEnv::set_controller(const DriveEnvAgent& agent) {
+  controller = agent;
+}
+
 void SoccerEnv::debug_draw() {
   float midline = height / 2.f;
 

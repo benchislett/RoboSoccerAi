@@ -4,6 +4,8 @@ import numpy as np
 
 import gym
 
+from agent import DriveAgent
+
 from torch import nn
 
 from net import load_model
@@ -53,22 +55,31 @@ class RoboSoccer(gym.Env):
     def __init__(self):
         super(RoboSoccer, self).__init__()
 
-        self.raw_agent = robopy.PDDriveAgent(1.0, 0.0)
-        self.raw_env = robopy.SoccerEnv(self.raw_agent.action)
-        self.opponent = robopy.DefenderSoccerAgent()
+        self.opponent = None
         self.inited = False
+        self.raw_env = robopy.SoccerEnv(DriveAgent("PDDriveAgent", None).action)
 
         self.action_space = gym.spaces.Box(-1, 1, (2,), dtype=np.float32)
         self.observation_space = gym.spaces.Box(-1, 1, (10,), dtype=np.float32)
 
+    def init(self):
+        self.inited = True
+        self.raw_env.init(True)
+
+    def set_opponent_agent(self, agent):
+        self.opponent = agent
+    
+    def set_driver_agent(self, agent):
+        self.raw_env.set_controller(agent.action)
+
     def step(self, action):
-        opp_action = self.opponent.action(np.asarray(self.raw_env.mirror_state(), dtype=np.float32))
+        mirror_obs = np.asarray(self.raw_env.mirror_state(), dtype=np.float32)
+        opp_action = self.opponent.action(mirror_obs)
 
         hit = self.raw_env.action([action[0], action[1], 1 - opp_action[0], opp_action[1]])
-
         self.raw_env.step()
-        dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
 
+        dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
         reward = -dist + 10000 * hit
 
         obs = np.asarray(self.raw_env.state(), dtype=np.float32)
@@ -85,9 +96,7 @@ class RoboSoccer(gym.Env):
             super(RoboSoccer, self).render(mode=mode)
 
         if not self.inited:
-            self.raw_env.init(True)
-            self.opponent = robopy.ManualSoccerAgent(self.raw_env)
-            self.inited = True
+            self.init()
 
         self.raw_env.update(True)
 

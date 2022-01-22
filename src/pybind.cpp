@@ -24,6 +24,7 @@ PYBIND11_MODULE(robopy, m) {
   py::class_<SoccerEnv, BlankEnv<10, 4>>(m, "SoccerEnv")
       .def(py::init<const DriveEnvAgent&>())
       .def("init", &SoccerEnv::init)
+      .def("set_controller", &SoccerEnv::set_controller)
       .def("update", &SoccerEnv::update)
       .def("reset", &SoccerEnv::reset)
       .def("state", &SoccerEnv::state)
