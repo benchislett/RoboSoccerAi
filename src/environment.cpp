@@ -27,10 +27,12 @@ void Ball::setPosition(int x, int y) {
 
 void Ball::reset() {
   setPosition(spawn_x, spawn_y);
+  body->SetLinearVelocity(b2Vec2_zero);
 }
 
 void Ball::teleport() {
   body->SetTransform(random_pos(), 0.f);
+  body->SetLinearVelocity(b2Vec2_zero);
 }
 
 void Bot::setState(int x, int y, float rot) {
@@ -39,6 +41,12 @@ void Bot::setState(int x, int y, float rot) {
 
 void Bot::reset() {
   setState(spawn_x, spawn_y, spawn_rot);
+  body->SetLinearVelocity(b2Vec2_zero);
+}
+
+void Bot::teleport() {
+  body->SetTransform(random_pos(), randfInRange(-pi, pi));
+  body->SetLinearVelocity(b2Vec2_zero);
 }
 
 void Bot::drive(float left, float right) {
@@ -62,12 +70,8 @@ void DriveEnv::debug_draw() {
 }
 
 void DriveEnv::reset() {
-  player.reset();
+  player.teleport();
 
-  scramble();
-}
-
-void DriveEnv::scramble() {
   b2Vec2 target = random_pos();
 
   target_x = target.x;
@@ -92,7 +96,7 @@ float DriveEnv::action(std::array<float, 2> input) {
   float hit = 0;
 
   if (dist() < (50.f / length)) {
-    scramble();
+    reset();
     hit = 1;
   }
 

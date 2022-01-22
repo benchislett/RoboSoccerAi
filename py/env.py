@@ -28,7 +28,7 @@ class RoboDrive(gym.Env):
         self.raw_env.step()
         dist = self.raw_env.dist()
 
-        reward = -dist + 100 * hit
+        reward = -dist + 1000 * hit
 
         obs = np.asarray(self.raw_env.state(), dtype=np.float32)
 
@@ -67,6 +67,9 @@ class RoboSoccer(gym.Env):
         self.raw_env.init(True)
 
     def set_opponent_agent(self, agent):
+        if isinstance(agent.model, robopy.ManualSoccerAgent):
+            raise ValueError("Opponent may not be controlled manually!")
+        
         self.opponent = agent
     
     def set_driver_agent(self, agent):

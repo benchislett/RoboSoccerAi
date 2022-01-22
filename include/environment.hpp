@@ -82,6 +82,8 @@ struct Bot {
 
   void reset();
 
+  void teleport();
+
   void drive(float left, float right);
 };
 
@@ -139,7 +141,7 @@ struct BlankEnv {
 
   BlankEnv()
       : debugDraw(nullptr), window(nullptr),
-        world(make_shared<b2World>(b2Vec2(0.f, 0.f))), top_wall{*world, width / 2, wall_thickness, width},
+        world(make_shared<b2World>(b2Vec2_zero)), top_wall{*world, width / 2, wall_thickness, width},
         bot_wall{*world, width / 2, height - wall_thickness, width}, left_wall{*world, wall_thickness, height / 2,
                                                                                height},
         right_wall{*world, width - wall_thickness, height / 2, height} {}
@@ -190,8 +192,6 @@ struct DriveEnv : BlankEnv<6, 2> {
   void debug_draw();
 
   void reset();
-
-  void scramble();
 
   std::array<float, 6> state() const;
 
