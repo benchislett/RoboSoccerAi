@@ -19,3 +19,11 @@ float clamp(float x, float lo, float hi) {
     return hi;
   return x;
 }
+
+float normalize_angle(float angle) {
+  while (angle > pi)
+    angle -= 2 * pi;
+  while (angle < -pi)
+    angle += 2 * pi;
+  return angle;
+}

@@ -9,29 +9,23 @@
 constexpr bool render = true;
 
 int main() {
-  DriveAgent agent;
-
-  SoccerAgent opponent;
+  PDDriveAgent agent;
 
   SoccerEnv env([&](auto input) { return agent.action(input); });
   env.init(render);
 
+  ChaserSoccerAgent opponent;
+  ManualSoccerAgent player(env);
+
   float reward = 0;
 
   for (int i = 0; i < 1024; i++) {
-    std::array<float, 2> action;
-
-    auto [mx, my] = sf::Mouse::getPosition(*env.window);
-    float mxf     = clamp(mx, 0, width) / length;
-    float myf     = clamp(my, 0, height) / length;
-
-    action = {mxf, myf};
-
     if (render && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       env.window->close();
       break;
     }
 
+    auto action          = player.action(env.state());
     auto opponent_action = opponent.action(env.mirror_state());
 
     env.step();

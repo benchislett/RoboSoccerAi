@@ -36,6 +36,15 @@ PYBIND11_MODULE(robopy, m) {
       .def("dist_ball_net2", &SoccerEnv::dist_ball_net2);
 
 
-  py::class_<DriveAgent>(m, "DriveAgent").def(py::init<py::float_, py::float_>()).def("action", &DriveAgent::action);
-  py::class_<SoccerAgent>(m, "SoccerAgent").def(py::init<>()).def("action", &SoccerAgent::action);
+  py::class_<PDDriveAgent>(m, "PDDriveAgent")
+      .def(py::init<py::float_, py::float_>())
+      .def("action", &PDDriveAgent::action);
+
+  py::class_<DefenderSoccerAgent>(m, "DefenderSoccerAgent")
+      .def(py::init<>())
+      .def("action", &DefenderSoccerAgent::action);
+  py::class_<ChaserSoccerAgent>(m, "ChaserSoccerAgent").def(py::init<>()).def("action", &ChaserSoccerAgent::action);
+  py::class_<ManualSoccerAgent>(m, "ManualSoccerAgent")
+      .def(py::init<const SoccerEnv&>())
+      .def("action", &ManualSoccerAgent::action);
 }

@@ -53,9 +53,9 @@ class RoboSoccer(gym.Env):
     def __init__(self):
         super(RoboSoccer, self).__init__()
 
-        self.raw_agent = robopy.DriveAgent(1.0, 0.0)
+        self.raw_agent = robopy.PDDriveAgent(1.0, 0.0)
         self.raw_env = robopy.SoccerEnv(self.raw_agent.action)
-        self.opponent = robopy.SoccerAgent()
+        self.opponent = robopy.DefenderSoccerAgent()
         self.inited = False
 
         self.action_space = gym.spaces.Box(-1, 1, (2,), dtype=np.float32)
@@ -86,6 +86,7 @@ class RoboSoccer(gym.Env):
 
         if not self.inited:
             self.raw_env.init(True)
+            self.opponent = robopy.ManualSoccerAgent(self.raw_env)
             self.inited = True
 
         self.raw_env.update(True)

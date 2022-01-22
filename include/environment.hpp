@@ -130,8 +130,8 @@ struct VerticalWall {
 template <int NState, int NInput>
 struct BlankEnv {
   unique_ptr<SfDebugDraw> debugDraw;
-  unique_ptr<sf::RenderWindow> window;
-  unique_ptr<b2World> world;
+  shared_ptr<sf::RenderWindow> window;
+  shared_ptr<b2World> world;
   HorizontalWall top_wall;
   HorizontalWall bot_wall;
   VerticalWall left_wall;
@@ -139,7 +139,7 @@ struct BlankEnv {
 
   BlankEnv()
       : debugDraw(nullptr), window(nullptr),
-        world(make_unique<b2World>(b2Vec2(0.f, 0.f))), top_wall{*world, width / 2, wall_thickness, width},
+        world(make_shared<b2World>(b2Vec2(0.f, 0.f))), top_wall{*world, width / 2, wall_thickness, width},
         bot_wall{*world, width / 2, height - wall_thickness, width}, left_wall{*world, wall_thickness, height / 2,
                                                                                height},
         right_wall{*world, width - wall_thickness, height / 2, height} {}
@@ -156,7 +156,7 @@ struct BlankEnv {
 
   void init(bool render = false) {
     if (render) {
-      window = make_unique<sf::RenderWindow>(sf::VideoMode(width, height), "RoboAI Window", sf::Style::Titlebar);
+      window = make_shared<sf::RenderWindow>(sf::VideoMode(width, height), "RoboAI Window", sf::Style::Titlebar);
       window->setFramerateLimit(fps);
 
       debugDraw = make_unique<SfDebugDraw>(window.get());

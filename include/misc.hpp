@@ -39,3 +39,5 @@ int randInRange(int lo, int hi);
 float randfInRange(float lo, float hi);
 
 float clamp(float x, float lo, float hi);
+
+float normalize_angle(float angle);

@@ -1,5 +1,3 @@
-import robopy
-
 import numpy as np
 
 import gym

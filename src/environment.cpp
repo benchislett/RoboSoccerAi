@@ -65,9 +65,6 @@ void DriveEnv::reset() {
   player.reset();
 
   scramble();
-
-  // target_x = width / length / 2.f;
-  // target_y = height / length / 2.f;
 }
 
 void DriveEnv::scramble() {
@@ -169,24 +166,6 @@ float SoccerEnv::action(std::array<float, 4> input) {
 
   player1.drive(player1_action[0], player1_action[1]);
   player2.drive(player2_action[0], player2_action[1]);
-
-  /* Manual Control Mode
-  std::array<float, 2> manual_action = {0, 0};
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-    manual_action[0] = +1;
-    manual_action[1] = +1;
-  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-    manual_action[0] = -1;
-    manual_action[1] = -1;
-  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-    manual_action[0] = +1;
-    manual_action[1] = -1;
-  } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-    manual_action[0] = -1;
-    manual_action[1] = +1;
-  }
-
-  player2.drive(manual_action[0], manual_action[1]);*/
 
   b2Vec2 ball_pos = ball.body->GetPosition();
 
