@@ -8,7 +8,7 @@ from agent import DriveAgent, SoccerAgent
 
 from env import register_envs, RoboDrive, RoboSoccer
 
-BATCH_SIZE = 1_000_000
+BATCH_SIZE = 294_912
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -20,7 +20,7 @@ def get_args():
 
     parser.add_argument('ModelPrefix')
     parser.add_argument('ModelCount', nargs='?', default=1, type=int)
-    parser.add_argument('Epochs', nargs='?', default=1, type=int)
+    parser.add_argument('Epochs', nargs='?', default=9999999, type=int)
     args = parser.parse_args()
 
     return [args.ModelPrefix, args.ModelCount, args.Epochs]
@@ -37,26 +37,26 @@ if __name__ == "__main__":
 
     for i in range(epochs):
 
-        for model_idx in range(model_count):
-
-            print("\n-------------------------------------")
-            print(f"Model {model_idx} epoch {i} VS ", end="")
-            prev_agent_name = model_name(model_prefix, model_idx, max(0, i - 1))
-            agent = SoccerAgent(prev_agent_name, env)
-
+        def new_opponent(individual_env):
             if randint(0, i) == 0:
                 opponent = SoccerAgent("DefenderSoccerAgent", env)
-                print("DefenderSoccerAgent")
             else:
                 opp_idx = randint(0, model_count - 1)
                 opp_iter = randint(0, i - 1)
                 opponent = SoccerAgent(model_name(model_prefix, opp_idx, opp_iter), env)
-                print(f"Model {opp_idx} epoch {opp_iter}")
-            
+            individual_env.set_opponent_agent(opponent)
+        
+        env.env_method("set_reset_hook", new_opponent)
+
+
+        for model_idx in range(model_count):
+
+            print("\n-------------------------------------")
+            print(f"Training Model {model_idx} Epoch {i}")
+            prev_agent_name = model_name(model_prefix, model_idx, max(0, i - 1))
+            agent = SoccerAgent(prev_agent_name, env)
             print("-------------------------------------\n")
             
-            env.env_method("set_opponent_agent", opponent)
-
             agent.model.learn(total_timesteps=BATCH_SIZE)
 
             agent.model.save(model_name(model_prefix, model_idx, i))

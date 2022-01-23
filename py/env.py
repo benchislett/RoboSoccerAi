@@ -57,6 +57,7 @@ class RoboSoccer(gym.Env):
 
         self.opponent = None
         self.inited = False
+        self.reset_hook = None
         self.raw_env = robopy.SoccerEnv(DriveAgent("PDDriveAgent", None).action)
 
         self.action_space = gym.spaces.Box(-1, 1, (2,), dtype=np.float32)
@@ -88,9 +89,15 @@ class RoboSoccer(gym.Env):
         obs = np.asarray(self.raw_env.state(), dtype=np.float32)
 
         return obs, reward, False, {}
+    
+    def set_reset_hook(self, func):
+        self.reset_hook = func
 
     def reset(self):
         self.raw_env.reset()
+
+        if self.reset_hook:
+            self.reset_hook(self)
 
         return np.asarray(self.raw_env.state(), dtype=np.float32)
 
