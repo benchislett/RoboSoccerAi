@@ -21,9 +21,10 @@ def get_args():
     parser.add_argument('ModelPrefix')
     parser.add_argument('ModelCount', nargs='?', default=1, type=int)
     parser.add_argument('Epochs', nargs='?', default=9999999, type=int)
+    parser.add_argument('ResumeEpoch', nargs='?', default=0, type=int)
     args = parser.parse_args()
 
-    return [args.ModelPrefix, args.ModelCount, args.Epochs]
+    return [args.ModelPrefix, args.ModelCount, args.Epochs, args.ResumeEpoch]
 
 def model_name(prefix, model_idx, iter_idx):
     return f"{prefix}_{model_idx}_i{iter_idx}"
@@ -31,11 +32,11 @@ def model_name(prefix, model_idx, iter_idx):
 if __name__ == "__main__":
     register_envs()
 
-    model_prefix, model_count, epochs = get_args()
+    model_prefix, model_count, epochs, resume_epoch = get_args()
 
     env = make_vec_env("RoboSoccer-v0", n_envs=16)
 
-    for i in range(epochs):
+    for i in range(resume_epoch, resume_epoch + epochs):
 
         def new_opponent(individual_env):
             if randint(0, i) == 0:
@@ -47,7 +48,6 @@ if __name__ == "__main__":
             individual_env.set_opponent_agent(opponent)
         
         env.env_method("set_reset_hook", new_opponent)
-
 
         for model_idx in range(model_count):
 

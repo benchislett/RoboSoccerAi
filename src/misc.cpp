@@ -27,3 +27,8 @@ float normalize_angle(float angle) {
     angle += 2 * pi;
   return angle;
 }
+
+b2Vec2 random_pos() {
+  int pad = 2 * wall_thickness + ball_radius;
+  return b2Vec2((float) randInRange(pad, width - pad) / length, (float) randInRange(pad, height - pad) / length);
+}

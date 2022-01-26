@@ -1,5 +1,7 @@
 #pragma once
 
+#include "box2d/box2d.h"
+
 #include <cmath>
 #include <numbers>
 #include <random>
@@ -41,3 +43,5 @@ float randfInRange(float lo, float hi);
 float clamp(float x, float lo, float hi);
 
 float normalize_angle(float angle);
+
+b2Vec2 random_pos();

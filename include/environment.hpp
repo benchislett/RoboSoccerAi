@@ -36,7 +36,7 @@ struct Ball {
     body_def = make_unique<b2BodyDef>();
     body_def->position.Set((float) spawn_x / length, (float) spawn_y / length);
     body_def->type           = b2_dynamicBody;
-    body_def->linearDamping  = 1.f;
+    body_def->linearDamping  = 0.3f;
     body_def->angularDamping = 2.f;
 
     body = world.CreateBody(body_def.get());
@@ -213,8 +213,8 @@ struct SoccerEnv : BlankEnv<10, 4> {
 
 
   SoccerEnv(const DriveEnvAgent& agent)
-      : BlankEnv(), controller(agent), player1{*world, 100, height / 2}, player2{*world, width - 100, height / 2, -pi},
-        ball{*world} {}
+      : BlankEnv(), controller(agent), player1{*world, 100, randInRange(100, height - 100), 0},
+        player2{*world, width - 100, randInRange(100, height - 100), -pi}, ball{*world} {}
 
   void set_controller(const DriveEnvAgent& agent);
 
