@@ -9,9 +9,22 @@
 constexpr bool render = true;
 
 int main() {
-  PDDriveAgent agent;
+  // LiveSoccerEnv env;
 
-  SoccerEnv env([&](auto input) { return agent.action(input); });
+  // int last_frame = 0;
+  // while (!env.raw_state())
+  //   ;
+  // while (1) {
+  //   int frame = env.raw_state()->frames;
+  //   if (frame > last_frame) {
+  //     last_frame = frame;
+  //     printf("F: %6d\n", last_frame);
+  //   }
+  // }
+
+  PDDriveAgent controller;
+
+  SoccerEnv env;
   env.init(render);
 
   ChaserSoccerAgent opponent;
@@ -19,18 +32,39 @@ int main() {
 
   float reward = 0;
 
-  for (int i = 0; i < 1024; i++) {
+  while (1) {
     if (render && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       env.window->close();
       break;
     }
 
-    auto action          = player.action(env.state());
-    auto opponent_action = opponent.action(env.mirror_state());
+    std::array<float, 10> state  = env.state();
+    std::array<float, 4> state4  = {state[0], state[1], state[2], state[3]};
+    std::array<float, 4> mstate4 = {state[4], state[5], state[6], state[7]};
+
+    auto flip_target = [](std::array<float, 2> action) { return std::array<float, 2>({1 - action[0], action[1]}); };
+
+    auto player_action = controller.action(state4, player.action(env.state()));
+    // const float pwr                    = 1;
+    // std::array<float, 2> player_action = {0, 0};
+    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+    //   player_action[0] = pwr;
+    // }
+    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::P)) {
+    //   player_action[1] = pwr;
+    // }
+    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+    //   player_action[0] = -pwr;
+    // }
+    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
+    //   player_action[1] = -pwr;
+    // }
+
+    auto opponent_action = controller.action(mstate4, {1, 1});
 
     env.step();
 
-    float hit = env.action({action[0], action[1], 1 - opponent_action[0], opponent_action[1]});
+    float hit = env.action({player_action[0], player_action[1], opponent_action[0], opponent_action[1]});
 
     env.update(render);
 

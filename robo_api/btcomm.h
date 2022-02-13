@@ -35,7 +35,7 @@
 #include <unistd.h>
 
 #ifndef HEXKEY
-#define HEXKEY "00:16:XX:XX:XX:XX" // <--- Your bot's hex code goes here
+#define HEXKEY "00:16:53:56:2C:03" // <--- Your bot's hex code goes here
 #endif
 
 extern int message_id_counter; // <-- Global message id counter

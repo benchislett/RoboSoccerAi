@@ -9,13 +9,32 @@
 using std::numbers::pi;
 
 // physics parameters
-constexpr int fps        = 12;
+constexpr int fps        = 30;
 constexpr float timeStep = 1.f / (float) fps;
 
 constexpr int velocityIterations = 6;
 constexpr int positionIterations = 2;
 
-constexpr float power_scale = 1.f / 100.f;
+constexpr float ball_damping_linear  = 0.3f;
+constexpr float ball_damping_angular = 2.f;
+constexpr float bot_damping_linear   = 4.f;
+constexpr float bot_damping_angular  = 5.f;
+
+constexpr float ball_density = 1.f;
+constexpr float bot_density  = 10.f;
+
+constexpr float ball_elasticity = 0.3f; // default
+// constexpr float ball_elasticity = 1.f; // bouncy ball mode
+
+constexpr float ball_size_variance = 0.3f;  // 80% - 120%
+constexpr float bot_size_variance  = 0.15f; // 80% - 120%
+// constexpr float ball_size_variance = 0.8f; // 20% - 180%
+// constexpr float bot_size_variance  = 0.8f; // 20% - 180%
+
+constexpr float power_scale = 1.f / 85.f;
+
+// environment parameters
+constexpr int agent_fps = 5;
 
 // dimensions in pixels
 constexpr int width  = 1024;
@@ -33,8 +52,9 @@ constexpr int net_width      = 40;
 constexpr int net_height     = 175;
 
 // dimension in box2d
-constexpr float bot_width_f  = bot_width / length;
-constexpr float bot_height_f = bot_height / length;
+constexpr float bot_width_f   = bot_width / length;
+constexpr float bot_height_f  = bot_height / length;
+constexpr float ball_radius_f = ball_radius / length;
 
 int randInRange(int lo, int hi);
 

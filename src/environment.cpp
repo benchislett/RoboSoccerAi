@@ -3,6 +3,7 @@
 #include "misc.hpp"
 
 #include <numbers>
+#include <thread>
 
 b2Vec2 left_wheel(b2Body* body) {
   b2Vec2 pos     = body->GetPosition();
@@ -23,6 +24,8 @@ void Ball::setPosition(int x, int y) {
 }
 
 void Ball::reset() {
+  float ball_r = base_radius * (1 + randfInRange(-ball_size_variance, ball_size_variance));
+  ((b2CircleShape*) body->GetFixtureList()->GetShape())->m_radius = ball_r;
   setPosition(spawn_x, spawn_y);
   body->SetLinearVelocity(b2Vec2_zero);
 }
@@ -37,6 +40,9 @@ void Bot::setState(int x, int y, float rot) {
 }
 
 void Bot::reset() {
+  float bot_w = base_width * (1 + randfInRange(-bot_size_variance, bot_size_variance));
+  float bot_h = base_height * (1 + randfInRange(-bot_size_variance, bot_size_variance));
+  ((b2PolygonShape*) body->GetFixtureList()->GetShape())->SetAsBox(bot_w, bot_h);
   setState(spawn_x, spawn_y, spawn_rot);
   body->SetLinearVelocity(b2Vec2_zero);
 }
@@ -62,52 +68,6 @@ void Bot::drive(float left, float right) {
   body->ApplyForce(right_force, right_wheel(body), true);
 }
 
-void DriveEnv::debug_draw() {
-  debugDraw->DrawPoint(b2Vec2(target_x, target_y), 20, b2Color(0, 5, 0));
-}
-
-void DriveEnv::reset() {
-  player.teleport();
-
-  b2Vec2 target = random_pos();
-
-  target_x = target.x;
-  target_y = target.y;
-}
-
-std::array<float, 6> DriveEnv::state() const {
-  b2Vec2 player_pos = player.body->GetPosition();
-
-  float player_rot = player.body->GetAngle();
-
-  return {player_pos.x, player_pos.y, cosf(player_rot), sinf(player_rot), target_x, target_y};
-}
-
-void DriveEnv::step() {
-  world->Step(timeStep, velocityIterations, positionIterations);
-}
-
-float DriveEnv::action(std::array<float, 2> input) {
-  player.drive(input[0], input[1]);
-
-  float hit = 0;
-
-  if (dist() < (50.f / length)) {
-    reset();
-    hit = 1;
-  }
-
-  return hit;
-}
-
-float DriveEnv::dist() const {
-  return (player.body->GetPosition() - b2Vec2(target_x, target_y)).Length();
-}
-
-void SoccerEnv::set_controller(const DriveEnvAgent& agent) {
-  controller = agent;
-}
-
 void SoccerEnv::debug_draw() {
   float midline = height / 2.f;
 
@@ -122,7 +82,6 @@ void SoccerEnv::debug_draw() {
       b2Vec2((width - wall_thickness - net_width) / length, (midline - (net_height / 2)) / length),
       b2Vec2((width - wall_thickness) / length, (midline - (net_height / 2)) / length)};
 
-
   debugDraw->DrawSolidPolygon(net1.begin(), 4, b2Color(0, 1, 0, 0.2f));
   debugDraw->DrawSolidPolygon(net2.begin(), 4, b2Color(0, 1, 0, 0.2f));
 }
@@ -131,6 +90,7 @@ void SoccerEnv::reset() {
   player1.reset();
   player2.reset();
   ball.reset();
+  history.clear();
 }
 
 std::array<float, 10> SoccerEnv::state() const {
@@ -164,13 +124,11 @@ void SoccerEnv::step() {
 float SoccerEnv::action(std::array<float, 4> input) {
   auto current_state = state();
 
-  auto player1_action =
-      controller({current_state[0], current_state[1], current_state[2], current_state[3], input[0], input[1]});
-  auto player2_action =
-      controller({current_state[4], current_state[5], current_state[6], current_state[7], input[2], input[3]});
+  for (int i = 0; i < 4; i++)
+    input[i] = clamp(input[i], -1, 1);
 
-  player1.drive(player1_action[0], player1_action[1]);
-  player2.drive(player2_action[0], player2_action[1]);
+  player1.drive(input[0], input[1]);
+  player2.drive(input[2], input[3]);
 
   b2Vec2 ball_pos = ball.body->GetPosition();
 
@@ -205,4 +163,107 @@ float SoccerEnv::dist_ball_net1() const {
 
 float SoccerEnv::dist_ball_net2() const {
   return (b2Vec2(width / length, height / length / 2.f) - ball.body->GetPosition()).Length();
+}
+
+LiveSoccerEnv::LiveSoccerEnv() {
+  auto start = [&]() {
+    BT_open(HEXKEY);
+
+    int n_args = 0;
+    glutInit(&n_args, NULL);
+
+    char videoid[16] = "/dev/video2";
+
+    if (imageCaptureStartup(videoid, 1280, 720, 0, 0)) {
+      fprintf(stderr, "Couldn't start image capture, terminating...\n");
+      exit(0);
+    }
+  };
+
+  runner = make_unique<std::thread>(start);
+}
+
+struct AI_data* LiveSoccerEnv::raw_state() const {
+  return poll_ai_state();
+}
+
+std::array<float, 10> LiveSoccerEnv::state_from_raw(struct AI_data data) {
+  float ball_x = data.old_bcx;
+  float ball_y = data.old_bcy;
+
+  if (data.ball != NULL) {
+    ball_x = data.ball->cx;
+    ball_y = data.ball->cy;
+  }
+
+  float self_x  = data.old_scx;
+  float self_y  = data.old_scy;
+  float self_rx = data.sdx;
+  float self_ry = data.sdy;
+
+  if (data.self != NULL) {
+    self_x = data.self->cx;
+    self_y = data.self->cy;
+  }
+
+  float opp_x  = data.old_ocx;
+  float opp_y  = data.old_ocy;
+  float opp_rx = data.odx;
+  float opp_ry = data.ody;
+
+  if (data.opp != NULL) {
+    opp_x = data.opp->cx;
+    opp_y = data.opp->cy;
+  }
+
+  return {self_x, self_y, self_rx, self_ry, opp_x, opp_y, opp_rx, opp_ry, ball_x, ball_y};
+}
+
+std::array<float, 10> LiveSoccerEnv::state() {
+  struct AI_data latest_record = *raw_state();
+
+  int frame_id = latest_record.frames;
+
+  if (history.size() > 0 && history.back().frames == frame_id)
+    return state_from_raw(history.back());
+
+  history.push_back(latest_record);
+
+  if (history.size() > 1024) {
+    std::shift_left(history.begin(), history.end(), 1);
+    history.pop_back();
+  }
+
+  return state_from_raw(latest_record);
+}
+
+std::array<float, 100> LiveSoccerEnv::state10() {
+  std::array<float, 100> stacked_state;
+
+  auto st = state();
+  for (int idx = 0; idx < 10; idx++) {
+    int row = history.size() - 1 - idx;
+    if (row >= 0) {
+      st = state_from_raw(history[row]);
+    }
+    for (int i = 0; i < 10; i++) {
+      stacked_state[idx * 10 + i] = st[i];
+    }
+  }
+
+  return stacked_state;
+}
+
+void LiveSoccerEnv::action(std::array<float, 2> input) {
+  BT_motor_port_speed(MOTOR_A, (char) (input[0] * 99.9));
+  BT_motor_port_speed(MOTOR_D, (char) (input[1] * 99.9));
+  return;
+}
+
+void LiveSoccerEnv::reset() {
+  history.clear();
+}
+
+LiveSoccerEnv::~LiveSoccerEnv() {
+  runner->join();
 }

@@ -13,7 +13,7 @@ struct PDDriveAgent {
 
   PDDriveAgent(const float p = 1.0, const float d = 0.0) : Kp(p), Kd(d) {}
 
-  std::array<float, 2> action(std::array<float, 6> input);
+  std::array<float, 2> action(std::array<float, 4> player_state, std::array<float, 2> target);
 };
 
 struct DefenderSoccerAgent {

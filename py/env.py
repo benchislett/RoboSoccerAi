@@ -10,7 +10,7 @@ from torch import nn
 
 from net import load_model
 
-class RoboDrive(gym.Env):
+class RoboDriveSim(gym.Env):
     metadata = {"render.modes": ["human"]}
 
     def __init__(self):
@@ -67,6 +67,9 @@ class RoboSoccer(gym.Env):
         self.inited = True
         self.raw_env.init(True)
 
+    def set_speedup(val):
+        self.speedup = val
+
     def set_opponent_agent(self, agent):
         if isinstance(agent.model, robopy.ManualSoccerAgent):
             raise ValueError("Opponent may not be controlled manually!")
@@ -77,14 +80,17 @@ class RoboSoccer(gym.Env):
         self.raw_env.set_controller(agent.action)
 
     def step(self, action):
-        mirror_obs = np.asarray(self.raw_env.mirror_state(), dtype=np.float32)
-        opp_action = self.opponent.action(mirror_obs)
+        reward = 0.0
+        for i in range(self.speedup):
+            mirror_obs = np.asarray(self.raw_env.mirror_state(), dtype=np.float32)
+            opp_action = self.opponent.action(mirror_obs)
 
-        hit = self.raw_env.action([action[0], action[1], 1 - opp_action[0], opp_action[1]])
-        self.raw_env.step()
+            hit = self.raw_env.action([action[0], action[1], 1 - opp_action[0], opp_action[1]])
+            self.raw_env.step()
 
-        dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
-        reward = -dist + 10000 * hit
+            dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
+            reward += -dist + 10000 * hit
+        reward /= self.speedup
 
         obs = np.asarray(self.raw_env.state(), dtype=np.float32)
 
@@ -120,5 +126,5 @@ def register_envs():
     gym.envs.register(
         id="RoboSoccer-v0",
         entry_point=RoboSoccer,
-        max_episode_steps=1024,
+        max_episode_steps=256,
     )

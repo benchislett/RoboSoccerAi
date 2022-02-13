@@ -4,8 +4,15 @@
 #include "misc.hpp"
 #include "visualize.hpp"
 
+extern "C" {
+#include "btcomm.h"
+#include "imageCapture.h"
+#include "roboAI.h"
+}
+
 #include <functional>
 #include <memory>
+#include <thread>
 
 using std::make_shared;
 using std::make_unique;
@@ -24,20 +31,25 @@ struct Ball {
 
   int spawn_x, spawn_y;
 
+  static constexpr float base_radius = ball_radius_f;
+
   Ball(b2World& world, int sx = width / 2, int sy = height / 2) : spawn_x(sx), spawn_y(sy) {
     shape           = make_unique<b2CircleShape>();
-    shape->m_radius = ball_radius / length;
+    shape->m_radius = base_radius;
 
-    fixture           = make_unique<b2FixtureDef>();
-    fixture->shape    = shape.get();
-    fixture->density  = 1.f;
-    fixture->friction = 1.f;
+    fixture              = make_unique<b2FixtureDef>();
+    fixture->shape       = shape.get();
+    fixture->density     = ball_density;
+    fixture->friction    = 1.f;
+    fixture->restitution = ball_elasticity;
+
+    fixture->restitutionThreshold = 0;
 
     body_def = make_unique<b2BodyDef>();
     body_def->position.Set((float) spawn_x / length, (float) spawn_y / length);
     body_def->type           = b2_dynamicBody;
-    body_def->linearDamping  = 0.3f;
-    body_def->angularDamping = 2.f;
+    body_def->linearDamping  = ball_damping_linear;
+    body_def->angularDamping = ball_damping_angular;
 
     body = world.CreateBody(body_def.get());
     body->CreateFixture(fixture.get());
@@ -59,20 +71,23 @@ struct Bot {
   int spawn_x, spawn_y;
   float spawn_rot;
 
+  static constexpr float base_width  = bot_width_f / 2.f;
+  static constexpr float base_height = bot_height_f / 2.f;
+
   Bot(b2World& world, int sx, int sy, float sr = 0.f) : spawn_x(sx), spawn_y(sy), spawn_rot(sr) {
     shape = make_unique<b2PolygonShape>();
-    shape->SetAsBox(bot_width_f / 2.f, bot_height_f / 2.f);
+    shape->SetAsBox(base_width, base_height);
 
     fixture           = make_unique<b2FixtureDef>();
     fixture->shape    = shape.get();
-    fixture->density  = 10.f;
+    fixture->density  = bot_density;
     fixture->friction = 1.f;
 
     body_def = make_unique<b2BodyDef>();
     body_def->position.Set((float) spawn_x / length, (float) spawn_y / length);
     body_def->type           = b2_dynamicBody;
-    body_def->linearDamping  = 8.f;
-    body_def->angularDamping = 8.f;
+    body_def->linearDamping  = bot_damping_linear;
+    body_def->angularDamping = bot_damping_angular;
 
     body = world.CreateBody(body_def.get());
     body->CreateFixture(fixture.get());
@@ -183,40 +198,16 @@ struct BlankEnv {
   }
 };
 
-struct DriveEnv : BlankEnv<6, 2> {
-  Bot player;
-  float target_x, target_y;
-
-  DriveEnv() : BlankEnv(), player{*world, 100, height / 2}, target_x(0.5), target_y(0.5) {}
-
-  void debug_draw();
-
-  void reset();
-
-  std::array<float, 6> state() const;
-
-  void step();
-
-  float action(std::array<float, 2> input);
-
-  float dist() const;
-};
-
-using DriveEnvAgent = std::function<std::array<float, 2>(std::array<float, 6>)>;
-
 struct SoccerEnv : BlankEnv<10, 4> {
-  DriveEnvAgent controller;
-
   Bot player1;
   Bot player2;
   Ball ball;
 
+  std::vector<std::array<float, 10>> history;
 
-  SoccerEnv(const DriveEnvAgent& agent)
-      : BlankEnv(), controller(agent), player1{*world, 100, randInRange(100, height - 100), 0},
+  SoccerEnv()
+      : BlankEnv(), player1{*world, 100, randInRange(100, height - 100), 0},
         player2{*world, width - 100, randInRange(100, height - 100), -pi}, ball{*world} {}
-
-  void set_controller(const DriveEnvAgent& agent);
 
   void debug_draw();
 
@@ -233,4 +224,25 @@ struct SoccerEnv : BlankEnv<10, 4> {
   float dist_player2_ball() const;
   float dist_ball_net1() const;
   float dist_ball_net2() const;
+};
+
+struct LiveSoccerEnv {
+  std::vector<struct AI_data> history;
+
+  unique_ptr<std::thread> runner;
+
+  LiveSoccerEnv();
+
+  struct AI_data* raw_state() const;
+
+  static std::array<float, 10> state_from_raw(struct AI_data data);
+
+  std::array<float, 10> state();
+  std::array<float, 100> state10();
+
+  void action(std::array<float, 2> input);
+
+  void reset();
+
+  ~LiveSoccerEnv();
 };

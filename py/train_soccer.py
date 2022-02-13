@@ -8,7 +8,7 @@ from agent import DriveAgent, SoccerAgent
 
 from env import register_envs, RoboDrive, RoboSoccer
 
-BATCH_SIZE = 294_912
+BATCH_SIZE = 500_000
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -35,19 +35,9 @@ if __name__ == "__main__":
     model_prefix, model_count, epochs, resume_epoch = get_args()
 
     env = make_vec_env("RoboSoccer-v0", n_envs=16)
+    env.env_method("set_opponent_agent", SoccerAgent("DefenderSoccerAgent", env))
 
     for i in range(resume_epoch, resume_epoch + epochs):
-
-        def new_opponent(individual_env):
-            if randint(0, i) == 0:
-                opponent = SoccerAgent("DefenderSoccerAgent", env)
-            else:
-                opp_idx = randint(0, model_count - 1)
-                opp_iter = randint(0, i - 1)
-                opponent = SoccerAgent(model_name(model_prefix, opp_idx, opp_iter), env)
-            individual_env.set_opponent_agent(opponent)
-        
-        env.env_method("set_reset_hook", new_opponent)
 
         for model_idx in range(model_count):
 

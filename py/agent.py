@@ -41,23 +41,11 @@ class DriveAgent(Agent):
 
 class SoccerAgent(Agent):
     def __init__(self, agent_name, env):
-        # model = network = None
-
-        if agent_name == "DefenderSoccerAgent":
-            model = robopy.DefenderSoccerAgent()
-            network = False
-        elif agent_name == "ChaserSoccerAgent":
-            model = robopy.ChaserSoccerAgent()
-            network = False
-        elif agent_name == "ManualSoccerAgent":
-            model = robopy.ManualSoccerAgent(env.raw_env)
-            network = False
-        else:
-            try:
-                model = load_model(agent_name, env)
-            except FileNotFoundError:
-                model = new_model(env)
-            network = True
+        try:
+            model = load_model(agent_name, env)
+        except FileNotFoundError:
+            model = new_model(env)
+        network = True
         
         Agent.__init__(self, model, network)
     

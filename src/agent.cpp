@@ -3,8 +3,9 @@
 #include "misc.hpp"
 #include "visualize.hpp"
 
-std::array<float, 2> PDDriveAgent::action(std::array<float, 6> input) {
-  auto [px, py, rx, ry, tx, ty] = input;
+std::array<float, 2> PDDriveAgent::action(std::array<float, 4> player_state, std::array<float, 2> target) {
+  auto [px, py, rx, ry] = player_state;
+  auto [tx, ty]         = target;
 
   float self_rot = atan2(ry, rx);
 
@@ -14,11 +15,24 @@ std::array<float, 2> PDDriveAgent::action(std::array<float, 6> input) {
   float dx = tx - px;
   float dy = ty - py;
 
+  if ((dx * dx + dy * dy) < 0.001f)
+    return {0, 0};
+
   float angle = normalize_angle(-self_rot);
 
   float target_angle = atan2(-dy, dx);
 
-  float d = atan2(sinf(target_angle - angle), cosf(target_angle - angle));
+  float d1 = atan2(sinf(target_angle - angle), cosf(target_angle - angle));
+  float d2 = atan2(sinf((pi + target_angle) - angle), cosf((pi + target_angle) - angle));
+  float d;
+
+  if (fabsf(d1) < fabsf(d2)) {
+    d = d1;
+  } else {
+    d = d2;
+    m1 *= -1;
+    m2 *= -1;
+  }
 
   float dd = Kp * d + Kd * (d - prev_d);
 

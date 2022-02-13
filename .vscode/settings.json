@@ -99,6 +99,10 @@
     "queue": "cpp",
     "stack": "cpp",
     "regex": "cpp",
-    "slist": "cpp"
+    "slist": "cpp",
+    "time.h": "c",
+    "roboai.h": "c",
+    "math.h": "c",
+    "utils.h": "c"
   },
 }
