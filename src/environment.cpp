@@ -118,14 +118,20 @@ std::array<float, 10> SoccerEnv::mirror_state() const {
 }
 
 void SoccerEnv::step() {
-  world->Step(timeStep, velocityIterations, positionIterations);
+  int n_steps = fps / agent_fps;
+  for (int i = 0; i < n_steps; i++)
+    world->Step(timeStep, velocityIterations, positionIterations);
 }
 
 float SoccerEnv::action(std::array<float, 4> input) {
-  auto current_state = state();
-
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < 4; i++) {
     input[i] = clamp(input[i], -1, 1);
+
+    float magnitude    = 0.5 * input[i] * input[i];
+    float action_noise = randfInRange(-magnitude, magnitude);
+
+    input[i] = clamp(input[i] + action_noise, -1, 1);
+  }
 
   player1.drive(input[0], input[1]);
   player2.drive(input[2], input[3]);

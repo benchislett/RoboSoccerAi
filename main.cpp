@@ -44,23 +44,8 @@ int main() {
 
     auto flip_target = [](std::array<float, 2> action) { return std::array<float, 2>({1 - action[0], action[1]}); };
 
-    auto player_action = controller.action(state4, player.action(env.state()));
-    // const float pwr                    = 1;
-    // std::array<float, 2> player_action = {0, 0};
-    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-    //   player_action[0] = pwr;
-    // }
-    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::P)) {
-    //   player_action[1] = pwr;
-    // }
-    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-    //   player_action[0] = -pwr;
-    // }
-    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {
-    //   player_action[1] = -pwr;
-    // }
-
-    auto opponent_action = controller.action(mstate4, {1, 1});
+    auto player_action   = controller.action(state4, player.action(env.state()));
+    auto opponent_action = controller.action(mstate4, flip_target(opponent.action(env.mirror_state())));
 
     env.step();
 

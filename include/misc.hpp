@@ -34,7 +34,7 @@ constexpr float bot_size_variance  = 0.15f; // 80% - 120%
 constexpr float power_scale = 1.f / 85.f;
 
 // environment parameters
-constexpr int agent_fps = 5;
+constexpr int agent_fps = 3;
 
 // dimensions in pixels
 constexpr int width  = 1024;
