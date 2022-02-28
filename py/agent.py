@@ -23,29 +23,17 @@ class Agent:
                 states.append(None)
             return actions, states
 
-class DriveAgent(Agent):
+class SoccerAgent(Agent):
     def __init__(self, agent_name, env):
-        # model = network = None
-
-        if agent_name == "PDDriveAgent":
-            model = robopy.PDDriveAgent(1.0, 0.0)
+        if not isinstance(agent_name, str):
             network = False
+            model = agent_name()
         else:
             try:
                 model = load_model(agent_name, env)
             except FileNotFoundError:
                 model = new_model(env)
             network = True
-        
-        Agent.__init__(self, model, network)
-
-class SoccerAgent(Agent):
-    def __init__(self, agent_name, env):
-        try:
-            model = load_model(agent_name, env)
-        except FileNotFoundError:
-            model = new_model(env)
-        network = True
         
         Agent.__init__(self, model, network)
     

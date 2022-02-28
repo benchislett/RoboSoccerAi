@@ -95,7 +95,7 @@ struct Bot {
 
   void setState(int x, int y, float rot = 0);
 
-  void reset();
+  void reset(bool flip = false);
 
   void teleport();
 
@@ -198,10 +198,12 @@ struct BlankEnv {
   }
 };
 
-struct SoccerEnv : BlankEnv<10, 4> {
+struct SoccerEnv : BlankEnv<11, 4> {
   Bot player1;
   Bot player2;
   Ball ball;
+
+  int side = 0;
 
   std::vector<std::array<float, 10>> history;
 
@@ -213,8 +215,9 @@ struct SoccerEnv : BlankEnv<10, 4> {
 
   void reset();
 
-  std::array<float, 10> state() const;
-  std::array<float, 10> mirror_state() const;
+  std::array<float, 11> state() const;
+  std::array<float, 10> savestate() const;
+  std::array<float, 101> state10();
 
   void step();
 
@@ -235,10 +238,11 @@ struct LiveSoccerEnv {
 
   struct AI_data* raw_state() const;
 
-  static std::array<float, 10> state_from_raw(struct AI_data data);
+  static std::array<float, 11> state_from_raw(struct AI_data data);
 
-  std::array<float, 10> state();
-  std::array<float, 100> state10();
+  std::array<float, 11> state();
+  std::array<float, 10> savestate();
+  std::array<float, 101> state10();
 
   void action(std::array<float, 2> input);
 

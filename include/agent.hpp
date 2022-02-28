@@ -17,17 +17,29 @@ struct PDDriveAgent {
 };
 
 struct DefenderSoccerAgent {
-  std::array<float, 2> action(std::array<float, 10> input);
+  bool player2;
+  PDDriveAgent controller;
+
+  DefenderSoccerAgent(bool p2 = false) : player2(p2), controller{1, 0} {}
+
+  std::array<float, 2> action(std::array<float, 11> input);
 };
 
 struct ChaserSoccerAgent {
-  std::array<float, 2> action(std::array<float, 10> input);
+  bool player2;
+  PDDriveAgent controller;
+
+  ChaserSoccerAgent(bool p2 = false) : player2(p2), controller{1, 0} {}
+
+  std::array<float, 2> action(std::array<float, 11> input);
 };
 
 struct ManualSoccerAgent {
+  PDDriveAgent controller;
+
   std::shared_ptr<sf::RenderWindow> window;
 
   ManualSoccerAgent(const SoccerEnv& env) : window(env.window) {}
 
-  std::array<float, 2> action(std::array<float, 10> input);
+  std::array<float, 2> action(std::array<float, 11> input);
 };

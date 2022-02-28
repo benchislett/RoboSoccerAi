@@ -44,36 +44,48 @@ std::array<float, 2> PDDriveAgent::action(std::array<float, 4> player_state, std
   return {clamp(m1, -1, 1), clamp(m2, -1, 1)};
 }
 
-std::array<float, 2> DefenderSoccerAgent::action(std::array<float, 10> input) {
-  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by] = input;
+static std::array<float, 11> swap_players(std::array<float, 11> input) {
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
+  return {p2x, p2y, p2rx, p2ry, p1x, p1y, p1rx, p1ry, bx, by, 1 - side};
+}
+
+std::array<float, 2> DefenderSoccerAgent::action(std::array<float, 11> input) {
+  if (player2)
+    input = swap_players(input);
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
 
   b2Vec2 our_net(0, height / length / 2.f);
+
+  if (side)
+    our_net.x = width / length;
+
   b2Vec2 ball(bx, by);
 
-  b2Vec2 target = (our_net + ball);
-  target.x /= 2.f;
-  target.y /= 2.f;
+  constexpr float ball_weight = 0.5;
 
-  return {target.x, target.y};
+  b2Vec2 target = ((1 - ball_weight) * our_net) + (ball_weight * ball);
+
+  return controller.action({p1x, p1y, p1rx, p1ry}, {target.x, target.y});
 }
 
-std::array<float, 2> ChaserSoccerAgent::action(std::array<float, 10> input) {
-  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by] = input;
+std::array<float, 2> ChaserSoccerAgent::action(std::array<float, 11> input) {
+  if (player2)
+    input = swap_players(input);
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
 
-  return {bx, by};
+  return controller.action({p1x, p1y, p1rx, p1ry}, {bx, by});
 }
 
-std::array<float, 2> ManualSoccerAgent::action(std::array<float, 10> input) {
-  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by] = input;
+std::array<float, 2> ManualSoccerAgent::action(std::array<float, 11> input) {
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
 
   if (window) {
     auto [mx, my] = sf::Mouse::getPosition(*window);
     float mxf     = clamp(mx, 0, width) / length;
     float myf     = clamp(my, 0, height) / length;
-
-    return {mxf, myf};
+    return controller.action({p1x, p1y, p1rx, p1ry}, {mxf, myf});
   } else {
     // window not open, ballchase instead
-    return {bx, by};
+    return controller.action({p1x, p1y, p1rx, p1ry}, {bx, by});
   }
 }

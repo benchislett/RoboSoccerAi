@@ -22,13 +22,11 @@ int main() {
   //   }
   // }
 
-  PDDriveAgent controller;
-
   SoccerEnv env;
   env.init(render);
 
-  ChaserSoccerAgent opponent;
   ManualSoccerAgent player(env);
+  DefenderSoccerAgent opponent(true);
 
   float reward = 0;
 
@@ -38,14 +36,8 @@ int main() {
       break;
     }
 
-    std::array<float, 10> state  = env.state();
-    std::array<float, 4> state4  = {state[0], state[1], state[2], state[3]};
-    std::array<float, 4> mstate4 = {state[4], state[5], state[6], state[7]};
-
-    auto flip_target = [](std::array<float, 2> action) { return std::array<float, 2>({1 - action[0], action[1]}); };
-
-    auto player_action   = controller.action(state4, player.action(env.state()));
-    auto opponent_action = controller.action(mstate4, flip_target(opponent.action(env.mirror_state())));
+    auto player_action   = player.action(env.state());
+    auto opponent_action = opponent.action(env.state());
 
     env.step();
 

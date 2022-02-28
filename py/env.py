@@ -4,50 +4,9 @@ import numpy as np
 
 import gym
 
-from agent import DriveAgent
-
 from torch import nn
 
 from net import load_model
-
-class RoboDriveSim(gym.Env):
-    metadata = {"render.modes": ["human"]}
-
-    def __init__(self):
-        super(RoboDrive, self).__init__()
-
-        self.raw_env = robopy.DriveEnv()
-        self.inited = False
-
-        self.action_space = gym.spaces.Box(-1, 1, (2,), dtype=np.float32)
-        self.observation_space = gym.spaces.Box(-1, 1, (6,), dtype=np.float32)
-
-    def step(self, action):
-        hit = self.raw_env.action([action[0], action[1]])
-
-        self.raw_env.step()
-        dist = self.raw_env.dist()
-
-        reward = -dist + 1000 * hit
-
-        obs = np.asarray(self.raw_env.state(), dtype=np.float32)
-
-        return obs, reward, False, {}
-
-    def reset(self):
-        self.raw_env.reset()
-
-        return np.asarray(self.raw_env.state(), dtype=np.float32)
-
-    def render(self, mode="human"):
-        if mode != "human":
-            super(RoboDrive, self).render(mode=mode)
-
-        if not self.inited:
-            self.raw_env.init(True)
-            self.inited = True
-
-        self.raw_env.update(True)
 
 class RoboSoccer(gym.Env):
     metadata = {"render.modes": ["human"]}
@@ -58,17 +17,14 @@ class RoboSoccer(gym.Env):
         self.opponent = None
         self.inited = False
         self.reset_hook = None
-        self.raw_env = robopy.SoccerEnv(DriveAgent("PDDriveAgent", None).action)
+        self.raw_env = robopy.SoccerEnv()
 
         self.action_space = gym.spaces.Box(-1, 1, (2,), dtype=np.float32)
-        self.observation_space = gym.spaces.Box(-1, 1, (10,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(-1, 1, (11,), dtype=np.float32)
 
     def init(self):
         self.inited = True
         self.raw_env.init(True)
-
-    def set_speedup(val):
-        self.speedup = val
 
     def set_opponent_agent(self, agent):
         if isinstance(agent.model, robopy.ManualSoccerAgent):
@@ -76,23 +32,26 @@ class RoboSoccer(gym.Env):
         
         self.opponent = agent
     
-    def set_driver_agent(self, agent):
-        self.raw_env.set_controller(agent.action)
-
+    def _state(self):
+        return np.asarray(self.raw_env.state(), dtype=np.float32)
+    
     def step(self, action):
         reward = 0.0
-        for i in range(self.speedup):
-            mirror_obs = np.asarray(self.raw_env.mirror_state(), dtype=np.float32)
-            opp_action = self.opponent.action(mirror_obs)
 
-            hit = self.raw_env.action([action[0], action[1], 1 - opp_action[0], opp_action[1]])
-            self.raw_env.step()
+        opp_action = self.opponent.action(self._state())
 
-            dist = (self.raw_env.dist_player1_ball() + self.raw_env.dist_ball_net2())
-            reward += -dist + 10000 * hit
-        reward /= self.speedup
+        hit = self.raw_env.action([action[0], action[1], opp_action[0], opp_action[1]])
+        self.raw_env.step()
 
-        obs = np.asarray(self.raw_env.state(), dtype=np.float32)
+        dist = self.raw_env.dist_player1_ball()
+        if self.raw_env.side == 1.0:
+            dist += self.raw_env.dist_ball_net1()
+        else:
+            dist += self.raw_env.dist_ball_net2()
+
+        reward += -dist + 10000 * hit
+
+        obs = self._state()
 
         return obs, reward, False, {}
     
@@ -105,7 +64,7 @@ class RoboSoccer(gym.Env):
         if self.reset_hook:
             self.reset_hook(self)
 
-        return np.asarray(self.raw_env.state(), dtype=np.float32)
+        return self._state()
 
     def render(self, mode="human"):
         if mode != "human":
@@ -118,13 +77,7 @@ class RoboSoccer(gym.Env):
 
 def register_envs():
     gym.envs.register(
-        id="RoboDrive-v0",
-        entry_point=RoboDrive,
-        max_episode_steps=1024
-    )
-
-    gym.envs.register(
         id="RoboSoccer-v0",
         entry_point=RoboSoccer,
-        max_episode_steps=256,
+        max_episode_steps=1024,
     )

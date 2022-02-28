@@ -39,11 +39,14 @@ void Bot::setState(int x, int y, float rot) {
   body->SetTransform(b2Vec2(x / length, y / length), rot);
 }
 
-void Bot::reset() {
+void Bot::reset(bool flip) {
   float bot_w = base_width * (1 + randfInRange(-bot_size_variance, bot_size_variance));
   float bot_h = base_height * (1 + randfInRange(-bot_size_variance, bot_size_variance));
   ((b2PolygonShape*) body->GetFixtureList()->GetShape())->SetAsBox(bot_w, bot_h);
-  setState(spawn_x, spawn_y, spawn_rot);
+
+  int spawn_x_actual     = flip ? (width - spawn_x) : spawn_x;
+  float spawn_rot_actual = flip ? (pi - spawn_rot) : spawn_rot;
+  setState(spawn_x_actual, spawn_y, spawn_rot_actual);
   body->SetLinearVelocity(b2Vec2_zero);
 }
 
@@ -87,13 +90,15 @@ void SoccerEnv::debug_draw() {
 }
 
 void SoccerEnv::reset() {
-  player1.reset();
-  player2.reset();
+  // side = randInRange(0, 1);
+  side = 0;
+  player1.reset(side);
+  player2.reset(side);
   ball.reset();
   history.clear();
 }
 
-std::array<float, 10> SoccerEnv::state() const {
+std::array<float, 11> SoccerEnv::state() const {
   b2Vec2 player1_pos = player1.body->GetPosition();
   b2Vec2 player2_pos = player2.body->GetPosition();
   b2Vec2 ball_pos    = ball.body->GetPosition();
@@ -101,26 +106,41 @@ std::array<float, 10> SoccerEnv::state() const {
   float player1_rot = player1.body->GetAngle();
   float player2_rot = player2.body->GetAngle();
 
-  return {player1_pos.x, player1_pos.y,     cosf(player1_rot), sinf(player1_rot), player2_pos.x,
-          player2_pos.y, cosf(player2_rot), sinf(player2_rot), ball_pos.x,        ball_pos.y};
+  return {player1_pos.x,       player1_pos.y,     (cosf(player1_rot)), sinf(player1_rot), player2_pos.x, player2_pos.y,
+          (cosf(player2_rot)), sinf(player2_rot), ball_pos.x,          ball_pos.y,        (float) side};
 }
 
-std::array<float, 10> SoccerEnv::mirror_state() const {
-  b2Vec2 player1_pos = player1.body->GetPosition();
-  b2Vec2 player2_pos = player2.body->GetPosition();
-  b2Vec2 ball_pos    = ball.body->GetPosition();
+std::array<float, 10> SoccerEnv::savestate() const {
+  auto st = state();
+  std::array<float, 10> rest;
+  std::copy(st.begin(), st.begin() + 10, rest.begin());
+  return rest;
+}
 
-  float player1_rot = player1.body->GetAngle();
-  float player2_rot = player2.body->GetAngle();
+std::array<float, 101> SoccerEnv::state10() {
+  std::array<float, 101> stacked_state;
 
-  return {1.f - player2_pos.x, player2_pos.y,      -cosf(player2_rot), sinf(player2_rot), 1.f - player1_pos.x,
-          player1_pos.y,       -cosf(player1_rot), sinf(player1_rot),  1.f - ball_pos.x,  ball_pos.y};
+  auto st = savestate();
+  for (int idx = 0; idx < 10; idx++) {
+    int row = history.size() - 1 - idx;
+    if (row >= 0) {
+      st = history[row];
+    }
+    for (int i = 0; i < 10; i++) {
+      stacked_state[idx * 10 + i] = st[i];
+    }
+  }
+
+  stacked_state[100] = side;
+
+  return stacked_state;
 }
 
 void SoccerEnv::step() {
   int n_steps = fps / agent_fps;
   for (int i = 0; i < n_steps; i++)
     world->Step(timeStep, velocityIterations, positionIterations);
+  history.push_back(savestate());
 }
 
 float SoccerEnv::action(std::array<float, 4> input) {
@@ -150,6 +170,10 @@ float SoccerEnv::action(std::array<float, 4> input) {
       hit = 1;
       reset();
     }
+  }
+
+  if (side) {
+    hit *= -1;
   }
 
   return hit;
@@ -193,7 +217,7 @@ struct AI_data* LiveSoccerEnv::raw_state() const {
   return poll_ai_state();
 }
 
-std::array<float, 10> LiveSoccerEnv::state_from_raw(struct AI_data data) {
+std::array<float, 11> LiveSoccerEnv::state_from_raw(struct AI_data data) {
   float ball_x = data.old_bcx;
   float ball_y = data.old_bcy;
 
@@ -222,10 +246,12 @@ std::array<float, 10> LiveSoccerEnv::state_from_raw(struct AI_data data) {
     opp_y = data.opp->cy;
   }
 
-  return {self_x, self_y, self_rx, self_ry, opp_x, opp_y, opp_rx, opp_ry, ball_x, ball_y};
+  int side = data.side;
+
+  return {self_x, self_y, self_rx, self_ry, opp_x, opp_y, opp_rx, opp_ry, ball_x, ball_y, (float) side};
 }
 
-std::array<float, 10> LiveSoccerEnv::state() {
+std::array<float, 11> LiveSoccerEnv::state() {
   struct AI_data latest_record = *raw_state();
 
   int frame_id = latest_record.frames;
@@ -243,19 +269,29 @@ std::array<float, 10> LiveSoccerEnv::state() {
   return state_from_raw(latest_record);
 }
 
-std::array<float, 100> LiveSoccerEnv::state10() {
-  std::array<float, 100> stacked_state;
-
+std::array<float, 10> LiveSoccerEnv::savestate() {
   auto st = state();
+  std::array<float, 10> rest;
+  std::copy(st.begin(), st.begin() + 10, rest.begin());
+  return rest;
+}
+
+std::array<float, 101> LiveSoccerEnv::state10() {
+  std::array<float, 101> stacked_state;
+
+  auto st = savestate();
   for (int idx = 0; idx < 10; idx++) {
     int row = history.size() - 1 - idx;
     if (row >= 0) {
-      st = state_from_raw(history[row]);
+      auto full = state_from_raw(history[row]);
+      std::copy(full.begin(), full.begin() + 10, st.begin());
     }
     for (int i = 0; i < 10; i++) {
       stacked_state[idx * 10 + i] = st[i];
     }
   }
+
+  stacked_state[100] = state()[10];
 
   return stacked_state;
 }
