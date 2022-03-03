@@ -15,7 +15,8 @@ class Agent:
     
     def predict(self, obs, **kwargs):
         if self.network:
-            return self.model.predict(obs, **kwargs)
+            action = self.model.predict(obs, **kwargs)
+            return action
         else:
             actions = states = []
             for o in obs:

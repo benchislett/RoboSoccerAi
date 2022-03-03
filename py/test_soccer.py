@@ -31,11 +31,14 @@ if __name__ == "__main__":
     env = gym.make("RoboSoccer-v0")
 
     agent = SoccerAgent(player_name, env)
-    opponent = SoccerAgent(robopy.DefenderSoccerAgent, env)
+    opponent = SoccerAgent(robopy.ChaserSoccerAgent, env)
     opponent.model.player2 = True
 
     env.set_opponent_agent(opponent)
 
+    reward, std = evaluate_policy(agent, env, deterministic=True, n_eval_episodes=8)
+    print("mean_reward (deterministic):", reward, "+/-", std)
     reward, std = evaluate_policy(agent, env, deterministic=False, n_eval_episodes=8)
-    print("mean_reward:", reward, "+/-", std)
-    evaluate_policy(agent, env, n_eval_episodes=5, deterministic=False, render=True)
+    print("mean_reward (non-deterministic):", reward, "+/-", std)
+    evaluate_policy(agent, env, n_eval_episodes=1, deterministic=True, render=True)
+    evaluate_policy(agent, env, n_eval_episodes=1, deterministic=False, render=True)

@@ -208,8 +208,9 @@ struct SoccerEnv : BlankEnv<11, 4> {
   std::vector<std::array<float, 10>> history;
 
   SoccerEnv()
-      : BlankEnv(), player1{*world, 100, randInRange(100, height - 100), 0},
-        player2{*world, width - 100, randInRange(100, height - 100), -pi}, ball{*world} {}
+      : BlankEnv(), player1{*world, 100, randomize_spawn_y ? randInRange(100, height - 100) : height / 2, 0},
+        player2{*world, width - 100, randomize_spawn_y ? randInRange(100, height - 100) : height / 2, -pi},
+        ball{*world} {}
 
   void debug_draw();
 
@@ -223,6 +224,7 @@ struct SoccerEnv : BlankEnv<11, 4> {
 
   float action(std::array<float, 4> input);
 
+  float dist_players() const;
   float dist_player1_ball() const;
   float dist_player2_ball() const;
   float dist_ball_net1() const;

@@ -35,21 +35,38 @@ class RoboSoccer(gym.Env):
     def _state(self):
         return np.asarray(self.raw_env.state(), dtype=np.float32)
     
+    def _stacked_state(self):
+        return np.asarray(self.raw_env.state10(), dtype=np.float32)
+    
+    def _shot_dist(self):
+        if self.raw_env.side == 1.0:
+            return self.raw_env.dist_ball_net1() ** 0.5
+        else:
+            return self.raw_env.dist_ball_net2() ** 0.5
+    
     def step(self, action):
         reward = 0.0
 
-        opp_action = self.opponent.action(self._state())
+        obs = self._state()
+
+        opp_action = self.opponent.action(obs)
+
+        reward += - (self.raw_env.dist_player1_ball() ** 0.8)
+
+        prev_shot_dist = self._shot_dist()
+        prev_dist_players = self.raw_env.dist_players()
 
         hit = self.raw_env.action([action[0], action[1], opp_action[0], opp_action[1]])
         self.raw_env.step()
 
-        dist = self.raw_env.dist_player1_ball()
-        if self.raw_env.side == 1.0:
-            dist += self.raw_env.dist_ball_net1()
-        else:
-            dist += self.raw_env.dist_ball_net2()
+        cur_shot_dist = self._shot_dist()
+        new_dist_players = self.raw_env.dist_players()
 
-        reward += -dist + 10000 * hit
+        reward += 1000 * (prev_shot_dist - cur_shot_dist)
+        reward += 10000 * hit
+
+        if (new_dist_players < 0.08 and prev_dist_players > 0.08):
+            reward += -3000
 
         obs = self._state()
 
@@ -79,5 +96,5 @@ def register_envs():
     gym.envs.register(
         id="RoboSoccer-v0",
         entry_point=RoboSoccer,
-        max_episode_steps=1024,
+        max_episode_steps=384,
     )

@@ -22,22 +22,23 @@ def get_args():
 
     parser.add_argument('Epochs', nargs='?', default=9999999, type=int)
     parser.add_argument('ResumeEpoch', nargs='?', default=0, type=int)
+    parser.add_argument('SaveDir', nargs='?', default="models", type=str)
     args = parser.parse_args()
 
-    return [args.Epochs, args.ResumeEpoch]
+    return [args.Epochs, args.ResumeEpoch, args.SaveDir]
 
 if __name__ == "__main__":
     register_envs()
 
-    epochs, resume_epoch = get_args()
+    epochs, resume_epoch, savedir = get_args()
 
     env = make_vec_env("RoboSoccer-v0", n_envs=8)
     
-    opponent = SoccerAgent(robopy.DefenderSoccerAgent, env)
+    opponent = SoccerAgent(robopy.ChaserSoccerAgent, env)
     opponent.model.player2 = True
     env.env_method("set_opponent_agent", opponent)
 
-    agent = SoccerAgent(f"models/model_{resume_epoch}", env)
+    agent = SoccerAgent(f"{savedir}/model_{max(0, resume_epoch - 1)}", env)
 
     for i in range(resume_epoch, resume_epoch + epochs):
 
@@ -47,6 +48,6 @@ if __name__ == "__main__":
         
         agent.model.learn(total_timesteps=EPOCH_SIZE)
 
-        agent.model.save(f"models/model_{i}")
+        agent.model.save(f"{savedir}/model_{i}")
 
     env.close()

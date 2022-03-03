@@ -1,5 +1,6 @@
 #include "environment.hpp"
 
+#include "agent.hpp"
 #include "misc.hpp"
 
 #include <numbers>
@@ -144,17 +145,18 @@ void SoccerEnv::step() {
 }
 
 float SoccerEnv::action(std::array<float, 4> input) {
-  for (int i = 0; i < 4; i++) {
-    input[i] = clamp(input[i], -1, 1);
+  input[0] = clamp(input[0], 0, width / length);
+  input[1] = clamp(input[1], 0, height / length);
+  input[2] = clamp(input[2], 0, width / length);
+  input[3] = clamp(input[3], 0, height / length);
 
-    float magnitude    = 0.5 * input[i] * input[i];
-    float action_noise = randfInRange(-magnitude, magnitude);
+  auto st = state();
 
-    input[i] = clamp(input[i] + action_noise, -1, 1);
-  }
+  auto p1_action = PDDriveAgent{1, 0}.action({st[0], st[1], st[2], st[3]}, {input[0], input[1]});
+  auto p2_action = PDDriveAgent{1, 0}.action({st[4], st[5], st[6], st[7]}, {input[2], input[3]});
 
-  player1.drive(input[0], input[1]);
-  player2.drive(input[2], input[3]);
+  player1.drive(p1_action[0], p1_action[1]);
+  player2.drive(p2_action[0], p2_action[1]);
 
   b2Vec2 ball_pos = ball.body->GetPosition();
 
@@ -185,6 +187,10 @@ float SoccerEnv::dist_player1_ball() const {
 
 float SoccerEnv::dist_player2_ball() const {
   return (player2.body->GetPosition() - ball.body->GetPosition()).Length();
+}
+
+float SoccerEnv::dist_players() const {
+  return (player1.body->GetPosition() - player2.body->GetPosition()).Length();
 }
 
 float SoccerEnv::dist_ball_net1() const {
