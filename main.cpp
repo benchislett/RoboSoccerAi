@@ -26,7 +26,7 @@ int main() {
   env.init(render);
 
   ManualSoccerAgent player(env);
-  ChaserSoccerAgent opponent(true);
+  SwitchupSoccerAgent opponent(true);
 
   float reward = 0;
 

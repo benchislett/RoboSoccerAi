@@ -4,6 +4,7 @@
 #include "visualize.hpp"
 
 #include <array>
+#include <cstdlib>
 #include <memory>
 
 struct PDDriveAgent {
@@ -16,15 +17,29 @@ struct PDDriveAgent {
   std::array<float, 2> action(std::array<float, 4> player_state, std::array<float, 2> target);
 };
 
-struct DefenderSoccerAgent {
-  bool player2;
+struct SoccerAgent {
+  virtual std::array<float, 2> action(std::array<float, 11> input) = 0;
+};
 
-  DefenderSoccerAgent(bool p2 = false) : player2(p2) {}
+struct DefenderSoccerAgent : SoccerAgent {
+  bool player2;
+  float aggression;
+
+  DefenderSoccerAgent(bool p2 = false, float a = defender_aggression) : player2(p2), aggression(a) {}
 
   std::array<float, 2> action(std::array<float, 11> input);
 };
 
-struct ChaserSoccerAgent {
+struct TargetedSoccerAgent : SoccerAgent {
+  bool player2;
+  b2Vec2 target;
+
+  TargetedSoccerAgent(bool p2 = false, b2Vec2 t = {0, 0}) : player2(p2), target(t) {}
+
+  std::array<float, 2> action(std::array<float, 11> input);
+};
+
+struct ChaserSoccerAgent : SoccerAgent {
   bool player2;
 
   ChaserSoccerAgent(bool p2 = false) : player2(p2) {}
@@ -32,7 +47,25 @@ struct ChaserSoccerAgent {
   std::array<float, 2> action(std::array<float, 11> input);
 };
 
-struct ManualSoccerAgent {
+enum SwitchupAgentModes { DEFENDER40, DEFENDER80, DEFENDER120, RANDOM };
+
+struct SwitchupSoccerAgent : SoccerAgent {
+  static constexpr int switch_frequency = 180;
+
+  int switch_counter;
+  bool player2;
+  std::unique_ptr<SoccerAgent> active_agent;
+
+  SwitchupSoccerAgent(bool p2 = false) : switch_counter(0), player2(p2), active_agent{nullptr} {
+    new_agent();
+  }
+
+  void new_agent();
+
+  std::array<float, 2> action(std::array<float, 11> input);
+};
+
+struct ManualSoccerAgent : SoccerAgent {
   std::shared_ptr<sf::RenderWindow> window;
 
   ManualSoccerAgent(const SoccerEnv& env) : window(env.window) {}

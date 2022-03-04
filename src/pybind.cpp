@@ -42,10 +42,19 @@ PYBIND11_MODULE(robopy, m) {
       .def(py::init<>())
       .def_readwrite("player2", &DefenderSoccerAgent::player2)
       .def("action", &DefenderSoccerAgent::action);
+  py::class_<TargetedSoccerAgent>(m, "TargetedSoccerAgent")
+      .def(py::init<>())
+      .def_readwrite("player2", &TargetedSoccerAgent::player2)
+      .def_readwrite("target", &TargetedSoccerAgent::target)
+      .def("action", &TargetedSoccerAgent::action);
   py::class_<ChaserSoccerAgent>(m, "ChaserSoccerAgent")
       .def(py::init<>())
       .def_readwrite("player2", &ChaserSoccerAgent::player2)
       .def("action", &ChaserSoccerAgent::action);
+  py::class_<SwitchupSoccerAgent>(m, "SwitchupSoccerAgent")
+      .def(py::init<>())
+      .def_readwrite("player2", &SwitchupSoccerAgent::player2)
+      .def("action", &SwitchupSoccerAgent::action);
   py::class_<ManualSoccerAgent>(m, "ManualSoccerAgent")
       .def(py::init<const SoccerEnv&>())
       .def("action", &ManualSoccerAgent::action);

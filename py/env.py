@@ -27,9 +27,6 @@ class RoboSoccer(gym.Env):
         self.raw_env.init(True)
 
     def set_opponent_agent(self, agent):
-        if isinstance(agent.model, robopy.ManualSoccerAgent):
-            raise ValueError("Opponent may not be controlled manually!")
-        
         self.opponent = agent
     
     def _state(self):
@@ -65,8 +62,8 @@ class RoboSoccer(gym.Env):
         reward += 1000 * (prev_shot_dist - cur_shot_dist)
         reward += 10000 * hit
 
-        if (new_dist_players < 0.08 and prev_dist_players > 0.08):
-            reward += -3000
+        if (new_dist_players < 0.07 and prev_dist_players > 0.07):
+            pass # reward += -1000
 
         obs = self._state()
 

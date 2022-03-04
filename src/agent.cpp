@@ -54,15 +54,19 @@ std::array<float, 2> DefenderSoccerAgent::action(std::array<float, 11> input) {
     input = swap_players(input);
   auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
 
-  b2Vec2 our_net(0, height / length / 2.f);
+  b2Vec2 net(0, height / length / 2.f);
 
   if (side)
-    our_net.x = width / length;
+    net.x = width / length;
 
   b2Vec2 ball(bx, by);
 
-  b2Vec2 target = ((1 - defender_aggression) * our_net) + (defender_aggression * ball);
+  b2Vec2 target = net + aggression * (ball - net);
 
+  return {target.x, target.y};
+}
+
+std::array<float, 2> TargetedSoccerAgent::action(std::array<float, 11> input) {
   return {target.x, target.y};
 }
 
@@ -71,7 +75,51 @@ std::array<float, 2> ChaserSoccerAgent::action(std::array<float, 11> input) {
     input = swap_players(input);
   auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
 
+  float dx = p1x - p2x;
+  float dy = p1y - p2y;
+  float d  = sqrtf(dx * dx + dy * dy);
+
+  b2Vec2 our_net(0, height / length / 2.f);
+
+  if (side)
+    our_net.x = width / length;
+
+  if (d <= 0.1)
+    return {our_net.x, our_net.y};
+
   return {bx, by};
+}
+
+void SwitchupSoccerAgent::new_agent() {
+  switch_counter = 0;
+  int new_mode   = randInRange(0, 3);
+
+  constexpr int pad = 300;
+  float wlo         = pad / length;
+  float whi         = (width - pad) / length;
+  float hlo         = pad / length;
+  float hhi         = (height - pad) / length;
+
+  active_agent.release();
+  if (new_mode == DEFENDER40) {
+    active_agent = std::make_unique<DefenderSoccerAgent>(player2, 0.4f);
+  } else if (new_mode == DEFENDER80) {
+    active_agent = std::make_unique<DefenderSoccerAgent>(player2, 0.8f);
+  } else if (new_mode == DEFENDER120) {
+    active_agent = std::make_unique<DefenderSoccerAgent>(player2, 1.2f);
+  } else if (new_mode == RANDOM) {
+    active_agent =
+        std::make_unique<TargetedSoccerAgent>(player2, b2Vec2(randfInRange(wlo, whi), randfInRange(hlo, hhi)));
+  } else {
+    return;
+  }
+}
+
+std::array<float, 2> SwitchupSoccerAgent::action(std::array<float, 11> input) {
+  switch_counter++;
+  if (switch_counter > switch_frequency)
+    new_agent();
+  return active_agent->action(input);
 }
 
 std::array<float, 2> ManualSoccerAgent::action(std::array<float, 11> input) {
