@@ -39,8 +39,6 @@ if __name__ == "__main__":
         opponent = SoccerAgent(robopy.ChaserSoccerAgent, env)
     else:    
         opponent = SoccerAgent(getattr(robopy, opponent), env)
-    if hasattr(opponent.model, "player2"):
-        opponent.model.player2 = True
 
     env.set_opponent_agent(opponent)
 

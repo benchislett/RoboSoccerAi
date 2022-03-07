@@ -208,8 +208,10 @@ struct SoccerEnv : BlankEnv<11, 4> {
   std::vector<std::array<float, 10>> history;
 
   SoccerEnv()
-      : BlankEnv(), player1{*world, 100, randomize_spawn_y ? randInRange(100, height - 100) : height / 2, 0},
-        player2{*world, width - 100, randomize_spawn_y ? randInRange(100, height - 100) : height / 2, -pi},
+      : BlankEnv(), player1{*world, randomize_spawn_x ? randomX() : 100, randomize_spawn_y ? randomY() : height / 2,
+                            randomize_spawn_rot ? randfInRange(-pi, pi) : 0},
+        player2{*world, randomize_spawn_x ? randomX() : width - 100, randomize_spawn_y ? randomY() : height / 2,
+                randomize_spawn_rot ? randfInRange(-pi, pi) : -pi},
         ball{*world} {}
 
   void debug_draw();

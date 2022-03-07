@@ -45,8 +45,9 @@ class RoboSoccer(gym.Env):
         reward = 0.0
 
         obs = self._state()
+        opp_obs = [obs[4], obs[5], obs[6], obs[7], obs[0], obs[1], obs[2], obs[3], obs[8], obs[9], 1.0 - obs[10]]
 
-        opp_action = self.opponent.action(obs)
+        opp_action = self.opponent.action(opp_obs)
 
         reward += - (self.raw_env.dist_player1_ball() ** 0.8)
 
@@ -63,7 +64,7 @@ class RoboSoccer(gym.Env):
         reward += 10000 * hit
 
         if (new_dist_players < 0.07 and prev_dist_players > 0.07):
-            pass # reward += -1000
+            reward += -1000
 
         obs = self._state()
 

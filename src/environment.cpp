@@ -27,7 +27,11 @@ void Ball::setPosition(int x, int y) {
 void Ball::reset() {
   float ball_r = base_radius * (1 + randfInRange(-ball_size_variance, ball_size_variance));
   ((b2CircleShape*) body->GetFixtureList()->GetShape())->m_radius = ball_r;
-  setPosition(spawn_x, spawn_y);
+
+  if (randomize_ball_reset)
+    teleport();
+  else
+    setPosition(spawn_x, spawn_y);
   body->SetLinearVelocity(b2Vec2_zero);
 }
 
@@ -45,9 +49,13 @@ void Bot::reset(bool flip) {
   float bot_h = base_height * (1 + randfInRange(-bot_size_variance, bot_size_variance));
   ((b2PolygonShape*) body->GetFixtureList()->GetShape())->SetAsBox(bot_w, bot_h);
 
-  int spawn_x_actual     = flip ? (width - spawn_x) : spawn_x;
-  float spawn_rot_actual = flip ? (pi - spawn_rot) : spawn_rot;
-  setState(spawn_x_actual, spawn_y, spawn_rot_actual);
+  if (randomize_bot_reset)
+    teleport();
+  else {
+    int spawn_x_actual     = flip ? (width - spawn_x) : spawn_x;
+    float spawn_rot_actual = flip ? (pi - spawn_rot) : spawn_rot;
+    setState(spawn_x_actual, spawn_y, spawn_rot_actual);
+  }
   body->SetLinearVelocity(b2Vec2_zero);
 }
 
@@ -91,12 +99,13 @@ void SoccerEnv::debug_draw() {
 }
 
 void SoccerEnv::reset() {
-  // side = randInRange(0, 1);
-  side = 0;
+  side = randInRange(0, 1);
+  // side = 0;
   player1.reset(side);
   player2.reset(side);
   ball.reset();
   history.clear();
+  // printf("Side: %d\n", side);
 }
 
 std::array<float, 11> SoccerEnv::state() const {

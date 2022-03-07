@@ -6,7 +6,7 @@
 #include <numbers>
 #include <random>
 
-using std::numbers::pi;
+constexpr float pi = std::numbers::pi;
 
 // physics parameters
 constexpr int fps        = 30;
@@ -28,9 +28,13 @@ constexpr float ball_elasticity = 0.3f; // default
 
 constexpr float defender_aggression = 0.8f; // 80% towards ball
 
-constexpr bool randomize_spawn_y   = true;
-constexpr float ball_size_variance = 0.0f; // 80% - 120%
-constexpr float bot_size_variance  = 0.0f; // 80% - 120%
+constexpr bool randomize_spawn_x    = true;
+constexpr bool randomize_spawn_y    = true;
+constexpr bool randomize_spawn_rot  = true;
+constexpr bool randomize_ball_reset = true;
+constexpr bool randomize_bot_reset  = true;
+constexpr float ball_size_variance  = 0.0f; // 80% - 120%
+constexpr float bot_size_variance   = 0.0f; // 80% - 120%
 // constexpr float ball_size_variance = 0.8f; // 20% - 180%
 // constexpr float bot_size_variance  = 0.8f; // 20% - 180%
 
@@ -62,6 +66,10 @@ constexpr float ball_radius_f = ball_radius / length;
 int randInRange(int lo, int hi);
 
 float randfInRange(float lo, float hi);
+
+int randomX();
+int randomY();
+b2Vec2 randomCoordf();
 
 float clamp(float x, float lo, float hi);
 

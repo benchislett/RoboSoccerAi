@@ -34,8 +34,7 @@ if __name__ == "__main__":
 
     env = make_vec_env("RoboSoccer-v0", n_envs=8)
     
-    opponent = SoccerAgent(robopy.SwitchupSoccerAgent, env)
-    opponent.model.player2 = True
+    opponent = SoccerAgent(robopy.DefenderSoccerAgent, env)
     env.env_method("set_opponent_agent", opponent)
 
     agent = SoccerAgent(f"{savedir}/model_{max(0, resume_epoch - 1)}", env)

@@ -12,6 +12,18 @@ float randfInRange(float lo, float hi) {
   return std::uniform_real_distribution<>{lo, hi}(gen);
 }
 
+int randomX() {
+  return randfInRange(50, width - 50);
+}
+
+int randomY() {
+  return randfInRange(50, height - 50);
+}
+
+b2Vec2 randomCoordf() {
+  return b2Vec2(randomX() / length, randomY() / length);
+}
+
 float clamp(float x, float lo, float hi) {
   if (x < lo)
     return lo;
