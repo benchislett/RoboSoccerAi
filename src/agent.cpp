@@ -9,8 +9,8 @@ std::array<float, 2> PDDriveAgent::action(std::array<float, 4> player_state, std
 
   float self_rot = atan2(ry, rx);
 
-  float m1 = 0.8f;
-  float m2 = 0.8f;
+  float m1 = 0.5f;
+  float m2 = 0.5f;
 
   float dx = tx - px;
   float dy = ty - py;

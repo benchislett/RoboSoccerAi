@@ -3,6 +3,7 @@
 #include "agent.hpp"
 #include "misc.hpp"
 
+#include <iostream>
 #include <numbers>
 #include <thread>
 
@@ -185,6 +186,20 @@ int SoccerEnv::is_goal() const {
   return hit;
 }
 
+std::array<float, 2> compute_action(std::array<float, 2> input, std::array<float, 11> st, bool player2) {
+  if (manual_control)
+    return input;
+  else {
+    input[0] = clamp(input[0], 0, width / length);
+    input[1] = clamp(input[1], 0, height / length);
+    if (player2) {
+      return PDDriveAgent{1, 0}.action({st[4], st[5], st[6], st[7]}, input);
+    } else {
+      return PDDriveAgent{1, 0}.action({st[0], st[1], st[2], st[3]}, input);
+    }
+  }
+}
+
 float SoccerEnv::action(std::array<float, 4> input) {
   auto st = state();
 
@@ -192,13 +207,8 @@ float SoccerEnv::action(std::array<float, 4> input) {
     player1.drive(input[0], input[1]);
     player2.drive(input[2], input[3]);
   } else {
-    input[0] = clamp(input[0], 0, width / length);
-    input[1] = clamp(input[1], 0, height / length);
-    input[2] = clamp(input[2], 0, width / length);
-    input[3] = clamp(input[3], 0, height / length);
-
-    auto p1_action = PDDriveAgent{1, 0}.action({st[0], st[1], st[2], st[3]}, {input[0], input[1]});
-    auto p2_action = PDDriveAgent{1, 0}.action({st[4], st[5], st[6], st[7]}, {input[2], input[3]});
+    auto p1_action = compute_action({input[0], input[1]}, st, false);
+    auto p2_action = compute_action({input[2], input[3]}, st, true);
 
     player1.drive(p1_action[0], p1_action[1]);
     player2.drive(p2_action[0], p2_action[1]);
@@ -289,7 +299,11 @@ std::array<float, 11> LiveSoccerEnv::state_from_raw(struct AI_data data) {
 
   int side = data.side;
 
-  return {self_x, self_y, self_rx, self_ry, opp_x, opp_y, opp_rx, opp_ry, ball_x, ball_y, (float) side};
+  float wx = 1280;
+  float wy = 720;
+
+  return {self_x / wx, self_y / wy, self_rx,     self_ry,     opp_x / wx,  opp_y / wy,
+          opp_rx,      opp_ry,      ball_x / wx, ball_y / wy, (float) side};
 }
 
 std::array<float, 11> LiveSoccerEnv::state() {
@@ -338,8 +352,14 @@ std::array<float, 101> LiveSoccerEnv::state10() {
 }
 
 void LiveSoccerEnv::action(std::array<float, 2> input) {
-  BT_motor_port_speed(MOTOR_A, (char) (input[0] * 99.9));
-  BT_motor_port_speed(MOTOR_D, (char) (input[1] * 99.9));
+  auto action = compute_action({input[0], input[1]}, state(), false);
+  std::cout << "DRIVING: " << action[0] << ", " << action[1] << std::endl;
+  if (fabs(action[0]) < 0.1 && fabs(action[1]) < 0.1) {
+    BT_all_stop(0);
+  } else {
+    BT_motor_port_speed(MOTOR_A, (char) (action[0] * 29.9));
+    BT_motor_port_speed(MOTOR_D, (char) (action[1] * 29.9));
+  }
   return;
 }
 
