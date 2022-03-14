@@ -6,6 +6,8 @@ from random import randint
 
 from stable_baselines3.common.env_util import make_vec_env
 
+from net import save_model
+
 from agent import SoccerAgent
 
 from env import register_envs, RoboSoccer
@@ -22,7 +24,7 @@ def get_args():
 
     parser.add_argument('Epochs', nargs='?', default=9999999, type=int)
     parser.add_argument('ResumeEpoch', nargs='?', default=0, type=int)
-    parser.add_argument('SaveDir', nargs='?', default="models", type=str)
+    parser.add_argument('SaveDir', nargs='?', default="models1", type=str)
     args = parser.parse_args()
 
     return [args.Epochs, args.ResumeEpoch, args.SaveDir]
@@ -47,6 +49,6 @@ if __name__ == "__main__":
         
         agent.model.learn(total_timesteps=EPOCH_SIZE)
 
-        agent.model.save(f"{savedir}/model_{i}")
+        save_model(agent.model, f"{savedir}/model_{i}")
 
     env.close()

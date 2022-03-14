@@ -791,12 +791,14 @@ void AI_main(struct RoboAI* ai, struct blob* blobs, void* state) {
  You will lose marks if AI_main() is cluttered with code that doesn't belong
  there.
 **********************************************************************************/
-static struct AI_data* local_ai = NULL;
+static struct AI_data local_ai = {};
 
 void set_ai_state(struct RoboAI* ai) {
-  local_ai = &ai->st;
+  if (ai == NULL)
+    return;
+  local_ai = ai->st;
 }
 
-struct AI_data* poll_ai_state() {
+struct AI_data poll_ai_state() {
   return local_ai;
 }

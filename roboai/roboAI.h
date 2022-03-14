@@ -143,7 +143,7 @@ struct blob* id_coloured_blob2(struct RoboAI* ai, struct blob* blobs, int col);
 void track_agents(struct RoboAI* ai, struct blob* blobs);
 
 void set_ai_state(struct RoboAI* ai);
-struct AI_data* poll_ai_state();
+struct AI_data poll_ai_state();
 
 // Display List functions
 // the AI data structure provides a way for you to add graphical markers on-screen,

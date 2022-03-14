@@ -222,6 +222,8 @@ struct SoccerEnv : BlankEnv<11, 4> {
   std::array<float, 10> savestate() const;
   std::array<float, 101> state10();
 
+  int is_goal() const;
+
   void step();
 
   float action(std::array<float, 4> input);
@@ -240,7 +242,7 @@ struct LiveSoccerEnv {
 
   LiveSoccerEnv();
 
-  struct AI_data* raw_state() const;
+  struct AI_data raw_state() const;
 
   static std::array<float, 11> state_from_raw(struct AI_data data);
 

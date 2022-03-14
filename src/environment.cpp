@@ -28,10 +28,15 @@ void Ball::reset() {
   float ball_r = base_radius * (1 + randfInRange(-ball_size_variance, ball_size_variance));
   ((b2CircleShape*) body->GetFixtureList()->GetShape())->m_radius = ball_r;
 
-  if (randomize_ball_reset)
-    teleport();
-  else
-    setPosition(spawn_x, spawn_y);
+  int spawn_x_actual = spawn_x;
+  int spawn_y_actual = spawn_y;
+
+  if (randomize_ball_x)
+    spawn_x_actual = randomX();
+  if (randomize_ball_y)
+    spawn_y_actual = randomY();
+
+  setPosition(spawn_x_actual, spawn_y_actual);
   body->SetLinearVelocity(b2Vec2_zero);
 }
 
@@ -49,13 +54,19 @@ void Bot::reset(bool flip) {
   float bot_h = base_height * (1 + randfInRange(-bot_size_variance, bot_size_variance));
   ((b2PolygonShape*) body->GetFixtureList()->GetShape())->SetAsBox(bot_w, bot_h);
 
-  if (randomize_bot_reset)
-    teleport();
-  else {
-    int spawn_x_actual     = flip ? (width - spawn_x) : spawn_x;
-    float spawn_rot_actual = flip ? (pi - spawn_rot) : spawn_rot;
-    setState(spawn_x_actual, spawn_y, spawn_rot_actual);
-  }
+  int spawn_x_actual     = flip ? (width - spawn_x) : spawn_x;
+  int spawn_y_actual     = spawn_y;
+  float spawn_rot_actual = flip ? (pi - spawn_rot) : spawn_rot;
+
+  if (randomize_spawn_x)
+    spawn_x_actual = randomX();
+  if (randomize_spawn_y)
+    spawn_y_actual = randomY();
+  if (randomize_spawn_rot)
+    spawn_rot_actual = randfInRange(-pi, pi);
+
+  setState(spawn_x_actual, spawn_y_actual, spawn_rot_actual);
+
   body->SetLinearVelocity(b2Vec2_zero);
 }
 
@@ -99,11 +110,15 @@ void SoccerEnv::debug_draw() {
 }
 
 void SoccerEnv::reset() {
-  side = randInRange(0, 1);
-  // side = 0;
+  if (randomize_side)
+    side = randInRange(0, 1);
+  else
+    side = 0;
   player1.reset(side);
   player2.reset(side);
-  ball.reset();
+  do {
+    ball.reset();
+  } while (is_goal() != 0);
   history.clear();
   // printf("Side: %d\n", side);
 }
@@ -153,20 +168,7 @@ void SoccerEnv::step() {
   history.push_back(savestate());
 }
 
-float SoccerEnv::action(std::array<float, 4> input) {
-  input[0] = clamp(input[0], 0, width / length);
-  input[1] = clamp(input[1], 0, height / length);
-  input[2] = clamp(input[2], 0, width / length);
-  input[3] = clamp(input[3], 0, height / length);
-
-  auto st = state();
-
-  auto p1_action = PDDriveAgent{1, 0}.action({st[0], st[1], st[2], st[3]}, {input[0], input[1]});
-  auto p2_action = PDDriveAgent{1, 0}.action({st[4], st[5], st[6], st[7]}, {input[2], input[3]});
-
-  player1.drive(p1_action[0], p1_action[1]);
-  player2.drive(p2_action[0], p2_action[1]);
-
+int SoccerEnv::is_goal() const {
   b2Vec2 ball_pos = ball.body->GetPosition();
 
   float midline = height / 2.f;
@@ -176,12 +178,36 @@ float SoccerEnv::action(std::array<float, 4> input) {
   if (ball_pos.y < (midline + (net_height / 2.f)) / length && ball_pos.y > (midline - (net_height / 2)) / length) {
     if (ball_pos.x < (wall_thickness + net_width) / length) {
       hit = -1;
-      reset();
     } else if (ball_pos.x > (width - wall_thickness - net_width) / length) {
       hit = 1;
-      reset();
     }
   }
+  return hit;
+}
+
+float SoccerEnv::action(std::array<float, 4> input) {
+  auto st = state();
+
+  if (manual_control) {
+    player1.drive(input[0], input[1]);
+    player2.drive(input[2], input[3]);
+  } else {
+    input[0] = clamp(input[0], 0, width / length);
+    input[1] = clamp(input[1], 0, height / length);
+    input[2] = clamp(input[2], 0, width / length);
+    input[3] = clamp(input[3], 0, height / length);
+
+    auto p1_action = PDDriveAgent{1, 0}.action({st[0], st[1], st[2], st[3]}, {input[0], input[1]});
+    auto p2_action = PDDriveAgent{1, 0}.action({st[4], st[5], st[6], st[7]}, {input[2], input[3]});
+
+    player1.drive(p1_action[0], p1_action[1]);
+    player2.drive(p2_action[0], p2_action[1]);
+  }
+
+  int hit = is_goal();
+
+  if (hit != 0)
+    reset();
 
   if (side) {
     hit *= -1;
@@ -217,7 +243,7 @@ LiveSoccerEnv::LiveSoccerEnv() {
     int n_args = 0;
     glutInit(&n_args, NULL);
 
-    char videoid[16] = "/dev/video2";
+    char videoid[16] = "/dev/video0";
 
     if (imageCaptureStartup(videoid, 1280, 720, 0, 0)) {
       fprintf(stderr, "Couldn't start image capture, terminating...\n");
@@ -228,7 +254,7 @@ LiveSoccerEnv::LiveSoccerEnv() {
   runner = make_unique<std::thread>(start);
 }
 
-struct AI_data* LiveSoccerEnv::raw_state() const {
+struct AI_data LiveSoccerEnv::raw_state() const {
   return poll_ai_state();
 }
 
@@ -267,7 +293,7 @@ std::array<float, 11> LiveSoccerEnv::state_from_raw(struct AI_data data) {
 }
 
 std::array<float, 11> LiveSoccerEnv::state() {
-  struct AI_data latest_record = *raw_state();
+  struct AI_data latest_record = raw_state();
 
   int frame_id = latest_record.frames;
 

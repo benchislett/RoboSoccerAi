@@ -26,15 +26,17 @@ constexpr float bot_density  = 10.f;
 constexpr float ball_elasticity = 0.3f; // default
 // constexpr float ball_elasticity = 1.f; // bouncy ball mode
 
-constexpr float defender_aggression = 0.8f; // 80% towards ball
+constexpr float defender_aggression = 0.5f; // 50% towards ball
 
-constexpr bool randomize_spawn_x    = true;
-constexpr bool randomize_spawn_y    = true;
-constexpr bool randomize_spawn_rot  = true;
-constexpr bool randomize_ball_reset = true;
-constexpr bool randomize_bot_reset  = true;
-constexpr float ball_size_variance  = 0.0f; // 80% - 120%
-constexpr float bot_size_variance   = 0.0f; // 80% - 120%
+constexpr bool manual_control      = false;
+constexpr bool randomize_spawn_x   = false;
+constexpr bool randomize_spawn_y   = true;
+constexpr bool randomize_spawn_rot = false;
+constexpr bool randomize_ball_x    = true;
+constexpr bool randomize_ball_y    = true;
+constexpr bool randomize_side      = false;
+constexpr float ball_size_variance = 0.0f; // 80% - 120%
+constexpr float bot_size_variance  = 0.0f; // 80% - 120%
 // constexpr float ball_size_variance = 0.8f; // 20% - 180%
 // constexpr float bot_size_variance  = 0.8f; // 20% - 180%
 
@@ -55,8 +57,8 @@ constexpr int bot_width      = 70;
 constexpr int bot_height     = 30;
 constexpr int ball_radius    = 10;
 constexpr int wall_thickness = 5;
-constexpr int net_width      = 60;
-constexpr int net_height     = 200;
+constexpr int net_width      = 350;
+constexpr int net_height     = 450;
 
 // dimension in box2d
 constexpr float bot_width_f   = bot_width / length;

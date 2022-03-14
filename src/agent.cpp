@@ -63,10 +63,18 @@ std::array<float, 2> DefenderSoccerAgent::action(std::array<float, 11> input) {
 
   b2Vec2 target = net + aggression * (ball - net);
 
+  if (manual_control)
+    return PDDriveAgent{0, 1}.action({p1x, p1y, p1rx, p1ry}, {target.x, target.y});
   return {target.x, target.y};
 }
 
 std::array<float, 2> TargetedSoccerAgent::action(std::array<float, 11> input) {
+  if (player2)
+    input = swap_players(input);
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
+
+  if (manual_control)
+    return PDDriveAgent{0, 1}.action({p1x, p1y, p1rx, p1ry}, {target.x, target.y});
   return {target.x, target.y};
 }
 
@@ -87,6 +95,8 @@ std::array<float, 2> ChaserSoccerAgent::action(std::array<float, 11> input) {
   if (d <= 0.1)
     return {our_net.x, our_net.y};
 
+  if (manual_control)
+    return PDDriveAgent{0, 1}.action({p1x, p1y, p1rx, p1ry}, {bx, by});
   return {bx, by};
 }
 
@@ -125,13 +135,17 @@ std::array<float, 2> SwitchupSoccerAgent::action(std::array<float, 11> input) {
 std::array<float, 2> ManualSoccerAgent::action(std::array<float, 11> input) {
   auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
 
+  std::array<float, 2> target = {bx, by};
+
   if (window) {
     auto [mx, my] = sf::Mouse::getPosition(*window);
     float mxf     = clamp(mx, 0, width) / length;
     float myf     = clamp(my, 0, height) / length;
-    return {mxf, myf};
-  } else {
-    // window not open, ballchase instead
-    return {bx, by};
+    target[0]     = mxf;
+    target[1]     = myf;
   }
+
+  if (manual_control)
+    return PDDriveAgent{0, 1}.action({p1x, p1y, p1rx, p1ry}, target);
+  return target;
 }

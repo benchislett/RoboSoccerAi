@@ -9,18 +9,18 @@
 constexpr bool render = true;
 
 int main() {
-  // LiveSoccerEnv env;
+  /*LiveSoccerEnv env;
 
-  // int last_frame = 0;
-  // while (!env.raw_state())
-  //   ;
-  // while (1) {
-  //   int frame = env.raw_state()->frames;
-  //   if (frame > last_frame) {
-  //     last_frame = frame;
-  //     printf("F: %6d\n", last_frame);
-  //   }
-  // }
+  int last_frame = 0;
+  while (env.raw_state().frames != 0)
+    ;
+  while (1) {
+    int frame = env.raw_state().frames;
+    if (frame > last_frame) {
+      last_frame = frame;
+      printf("F: %6d\n", last_frame);
+    }
+  }*/
 
   SoccerEnv env;
   env.init(render);

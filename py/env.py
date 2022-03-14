@@ -45,11 +45,25 @@ class RoboSoccer(gym.Env):
         reward = 0.0
 
         obs = self._state()
-        opp_obs = [obs[4], obs[5], obs[6], obs[7], obs[0], obs[1], obs[2], obs[3], obs[8], obs[9], 1.0 - obs[10]]
+        p1x, p1y, p1rx, p1ry, p2x, p2y, p2ry, p2rx, bx, by, side = obs
+        opp_obs = [p2x, p2y, p2rx, p2y, p1x, p1y, p1rx, p1y, bx, by, 1 - side]
 
         opp_action = self.opponent.action(opp_obs)
 
-        reward += - (self.raw_env.dist_player1_ball() ** 0.8)
+        factor = 1.5
+        p2_net = (1, 0.5) if side < 0.5 else (0, 0.5)
+        targetx = p2_net[0] + factor * (bx - p2_net[0])
+        targety = p2_net[1] + factor * (by - p2_net[1])
+        targetx = min(1, max(0, targetx))
+        if targety < 0:
+            targety *= -1
+        if targety > 1:
+            targety = 2 - targety
+        print(targetx, targety)
+        
+        dist_to_target = ((p1x - targetx) ** 2 + (p1y - targety) ** 2) ** 0.5
+        reward += -0.3 * (dist_to_target)
+        reward += -1.0 * (self.raw_env.dist_player1_ball() ** 0.8)
 
         prev_shot_dist = self._shot_dist()
         prev_dist_players = self.raw_env.dist_players()
@@ -64,7 +78,7 @@ class RoboSoccer(gym.Env):
         reward += 10000 * hit
 
         if (new_dist_players < 0.07 and prev_dist_players > 0.07):
-            reward += -1000
+            pass# reward += -1000
 
         obs = self._state()
 
@@ -94,5 +108,5 @@ def register_envs():
     gym.envs.register(
         id="RoboSoccer-v0",
         entry_point=RoboSoccer,
-        max_episode_steps=384,
+        max_episode_steps=512,
     )
