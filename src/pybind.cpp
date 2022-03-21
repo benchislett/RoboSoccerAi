@@ -20,6 +20,7 @@ PYBIND11_MODULE(robopy, m) {
       .def("state10", &SoccerEnv::state10)
       .def("step", &SoccerEnv::step)
       .def("action", &SoccerEnv::action)
+      .def("step_to_action", &SoccerEnv::step_to_action)
       .def("dist_players", &SoccerEnv::dist_players)
       .def("dist_player1_ball", &SoccerEnv::dist_player1_ball)
       .def("dist_player2_ball", &SoccerEnv::dist_player2_ball)

@@ -163,9 +163,7 @@ std::array<float, 101> SoccerEnv::state10() {
 }
 
 void SoccerEnv::step() {
-  int n_steps = fps / agent_fps;
-  for (int i = 0; i < n_steps; i++)
-    world->Step(timeStep, velocityIterations, positionIterations);
+  world->Step(timeStep, velocityIterations, positionIterations);
   history.push_back(savestate());
 }
 
@@ -221,6 +219,40 @@ float SoccerEnv::action(std::array<float, 4> input) {
 
   if (side) {
     hit *= -1;
+  }
+
+  return hit;
+}
+
+float SoccerEnv::step_to_action(std::array<float, 4> input) {
+  int hit = 0;
+  for (int i = 0; i < randInRange(35, 60); i++) {
+    auto st = state();
+
+    if (manual_control) {
+      player1.drive(input[0], input[1]);
+      player2.drive(input[2], input[3]);
+    } else {
+      auto p1_action = compute_action({input[0], input[1]}, st, false);
+      auto p2_action = compute_action({input[2], input[3]}, st, true);
+
+      if (b2Vec2(p1_action[0], p1_action[1]).Length() < 0.1 && b2Vec2(p2_action[0], p2_action[1]).Length() < 0.1) {
+        break;
+      }
+
+      player1.drive(p1_action[0], p1_action[1]);
+      player2.drive(p2_action[0], p2_action[1]);
+    }
+
+    hit = is_goal();
+
+    if (side)
+      hit *= -1;
+
+    if (hit != 0)
+      break;
+
+    step();
   }
 
   return hit;

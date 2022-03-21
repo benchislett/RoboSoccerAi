@@ -44,45 +44,31 @@ class RoboSoccer(gym.Env):
     def step(self, action):
         reward = 0.0
 
+        reward += -1.0 * (self.raw_env.dist_player1_ball() ** 0.8)
+
         obs = self._state()
         p1x, p1y, p1rx, p1ry, p2x, p2y, p2ry, p2rx, bx, by, side = obs
         opp_obs = [p2x, p2y, p2rx, p2y, p1x, p1y, p1rx, p1y, bx, by, 1 - side]
 
         opp_action = self.opponent.action(opp_obs)
 
-        factor = 1.5
-        p2_net = (1, 0.5) if side < 0.5 else (0, 0.5)
-        targetx = p2_net[0] + factor * (bx - p2_net[0])
-        targety = p2_net[1] + factor * (by - p2_net[1])
-        targetx = min(1, max(0, targetx))
-        if targety < 0:
-            targety *= -1
-        if targety > 1:
-            targety = 2 - targety
-        print(targetx, targety)
-        
-        dist_to_target = ((p1x - targetx) ** 2 + (p1y - targety) ** 2) ** 0.5
-        reward += -0.3 * (dist_to_target)
-        reward += -1.0 * (self.raw_env.dist_player1_ball() ** 0.8)
-
         prev_shot_dist = self._shot_dist()
         prev_dist_players = self.raw_env.dist_players()
 
-        hit = self.raw_env.action([action[0], action[1], opp_action[0], opp_action[1]])
-        self.raw_env.step()
+        hit = self.raw_env.step_to_action([action[0], action[1], opp_action[0], opp_action[1]])
 
         cur_shot_dist = self._shot_dist()
         new_dist_players = self.raw_env.dist_players()
 
-        reward += 1000 * (prev_shot_dist - cur_shot_dist)
+        reward += 100 * (prev_shot_dist - cur_shot_dist) + 200 * np.abs(prev_shot_dist - cur_shot_dist)
         reward += 10000 * hit
 
-        if (new_dist_players < 0.07 and prev_dist_players > 0.07):
-            pass# reward += -1000
+        # if (new_dist_players < 0.07 and prev_dist_players > 0.07):
+        #     pass# reward += -1000
 
         obs = self._state()
 
-        return obs, reward, False, {}
+        return obs, reward, (hit != 0), {}
     
     def set_reset_hook(self, func):
         self.reset_hook = func
@@ -108,5 +94,5 @@ def register_envs():
     gym.envs.register(
         id="RoboSoccer-v0",
         entry_point=RoboSoccer,
-        max_episode_steps=512,
+        max_episode_steps=32,
     )

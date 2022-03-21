@@ -30,7 +30,7 @@ int main() {
 
   float reward = 0;
 
-  for (int i = 0; i < 384000; i++) {
+  for (int i = 0; i < 384; i++) {
     if (render && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       env.window->close();
       break;
@@ -39,13 +39,11 @@ int main() {
     auto player_action   = player.action(env.state());
     auto opponent_action = opponent.action(env.state());
 
-    env.step();
-
-    float hit = env.action({player_action[0], player_action[1], opponent_action[0], opponent_action[1]});
+    float hit = env.step_to_action({player_action[0], player_action[1], opponent_action[0], opponent_action[1]});
+    if (fabsf(hit) > 0.1)
+      env.reset();
 
     env.update(render);
-
-    reward += hit;
   }
 
   return 0;

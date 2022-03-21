@@ -227,6 +227,7 @@ struct SoccerEnv : BlankEnv<11, 4> {
   void step();
 
   float action(std::array<float, 4> input);
+  float step_to_action(std::array<float, 4> input);
 
   float dist_players() const;
   float dist_player1_ball() const;
