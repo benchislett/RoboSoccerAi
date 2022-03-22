@@ -280,6 +280,8 @@ struct blob* id_coloured_blob2(struct RoboAI* ai, struct blob* blobs, int col) {
   return (fnd);
 }
 
+static double flip = 1;
+
 void track_agents(struct RoboAI* ai, struct blob* blobs) {
   ////////////////////////////////////////////////////////////////////////
   // This function does the tracking of each agent in the field. It looks
@@ -386,13 +388,17 @@ void track_agents(struct RoboAI* ai, struct blob* blobs) {
         p->cy = 1;
     }
 
+    double prod = dottie(flip * ai->st.sdx, flip * ai->st.sdy, p->dx, p->dy);
+    if (prod < -0.5)
+      flip *= -1.0;
+
     ai->st.selfID   = 1;
     ai->st.svx      = p->cx - ai->st.old_scx;
     ai->st.svy      = p->cy - ai->st.old_scy;
     ai->st.self->vx = ai->st.svx;
     ai->st.self->vy = ai->st.svy;
-    ai->st.sdx      = p->dx;
-    ai->st.sdy      = p->dy;
+    ai->st.sdx      = flip * p->dx;
+    ai->st.sdy      = flip * p->dy;
 
     vx = ai->st.svx;
     vy = ai->st.svy;
@@ -608,7 +614,6 @@ void AI_calibrate(struct RoboAI* ai, struct blob* blobs) {
   // in this function).
   track_agents(ai, blobs);
 }
-
 
 /**************************************************************************
  * AI state machine - this is where you will implement your soccer
