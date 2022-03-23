@@ -12,7 +12,7 @@ from agent import SoccerAgent
 
 from env import register_envs, RoboSoccer
 
-EPOCH_SIZE = 100_000
+EPOCH_SIZE = 500_000
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     epochs, resume_epoch, savedir = get_args()
 
-    env = make_vec_env("RoboSoccer-v0", n_envs=1)
+    env = make_vec_env("RoboSoccer-v0", n_envs=4)
     
     opponent = SoccerAgent(robopy.DefenderSoccerAgent, env)
     env.env_method("set_opponent_agent", opponent)
