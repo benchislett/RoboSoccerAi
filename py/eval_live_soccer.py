@@ -12,9 +12,9 @@ while True:
     frame = raw_state.frames
     if frame > last_frame:
         last_frame = frame
-        print(frame)
+        # print(frame)
         state = env.state()
         action = agent.action(state)
-        print('State: ', state)
-        print('Action: ', action)
+        # print('State: ', state)
+        # print('Action: ', action)
         env.action(action)
