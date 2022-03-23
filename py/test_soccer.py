@@ -31,6 +31,8 @@ if __name__ == "__main__":
 
     env = gym.make("RoboSoccer-v0")
 
+    if "Agent" in player_name:
+        player_name = getattr(robopy, player_name)
     agent = SoccerAgent(player_name, env)
 
     if opponent == "ManualSoccerAgent":
@@ -42,9 +44,9 @@ if __name__ == "__main__":
 
     env.set_opponent_agent(opponent)
 
-    reward, std = evaluate_policy(agent, env, deterministic=True, n_eval_episodes=8)
+    reward, std = evaluate_policy(agent, env, deterministic=True, n_eval_episodes=32)
     print("mean_reward (deterministic):", reward, "+/-", std)
-    reward, std = evaluate_policy(agent, env, deterministic=False, n_eval_episodes=8)
+    reward, std = evaluate_policy(agent, env, deterministic=False, n_eval_episodes=32)
     print("mean_reward (non-deterministic):", reward, "+/-", std)
     evaluate_policy(agent, env, n_eval_episodes=5, deterministic=True, render=True)
-    evaluate_policy(agent, env, n_eval_episodes=5, deterministic=False, render=True)
+    # evaluate_policy(agent, env, n_eval_episodes=5, deterministic=False, render=True)
