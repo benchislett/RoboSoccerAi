@@ -26,11 +26,9 @@ int main() {
   env.init(render);
 
   ManualSoccerAgent player(env);
-  DefenderSoccerAgent opponent(true);
+  ShooterSoccerAgent opponent(true);
 
-  float reward = 0;
-
-  for (int i = 0; i < 384; i++) {
+  for (int i = 0; i < 1024; i++) {
     if (render && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       env.window->close();
       break;

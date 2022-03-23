@@ -15,7 +15,7 @@ constexpr float timeStep = 1.f / (float) fps;
 constexpr int velocityIterations = 6;
 constexpr int positionIterations = 2;
 
-constexpr float ball_damping_linear  = 0.3f;
+constexpr float ball_damping_linear  = 0.5f;
 constexpr float ball_damping_angular = 2.f;
 constexpr float bot_damping_linear   = 4.f;
 constexpr float bot_damping_angular  = 5.f;
@@ -29,9 +29,9 @@ constexpr float ball_elasticity = 0.3f; // default
 constexpr float defender_aggression = 0.5f; // 50% towards ball
 
 constexpr bool manual_control      = false;
-constexpr bool randomize_spawn_x   = true;
+constexpr bool randomize_spawn_x   = false;
 constexpr bool randomize_spawn_y   = true;
-constexpr bool randomize_spawn_rot = true;
+constexpr bool randomize_spawn_rot = false;
 constexpr bool randomize_ball_x    = true;
 constexpr bool randomize_ball_y    = true;
 constexpr bool randomize_side      = false;

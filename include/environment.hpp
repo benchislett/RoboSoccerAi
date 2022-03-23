@@ -198,14 +198,12 @@ struct BlankEnv {
   }
 };
 
-struct SoccerEnv : BlankEnv<11, 4> {
+struct SoccerEnv : BlankEnv<13, 4> {
   Bot player1;
   Bot player2;
   Ball ball;
 
   int side = 0;
-
-  std::vector<std::array<float, 10>> history;
 
   SoccerEnv()
       : BlankEnv(), player1{*world, randomize_spawn_x ? randomX() : 100, randomize_spawn_y ? randomY() : height / 2,
@@ -218,9 +216,7 @@ struct SoccerEnv : BlankEnv<11, 4> {
 
   void reset();
 
-  std::array<float, 11> state() const;
-  std::array<float, 10> savestate() const;
-  std::array<float, 101> state10();
+  std::array<float, 13> state() const;
 
   int is_goal() const;
 
@@ -229,6 +225,8 @@ struct SoccerEnv : BlankEnv<11, 4> {
   float action(std::array<float, 4> input);
   float step_to_action(std::array<float, 4> input);
 
+  std::array<float, 2> net_left() const;
+  std::array<float, 2> net_right() const;
   float dist_players() const;
   float dist_player1_ball() const;
   float dist_player2_ball() const;
@@ -237,19 +235,15 @@ struct SoccerEnv : BlankEnv<11, 4> {
 };
 
 struct LiveSoccerEnv {
-  std::vector<struct AI_data> history;
-
   unique_ptr<std::thread> runner;
 
   LiveSoccerEnv();
 
   struct AI_data raw_state() const;
 
-  static std::array<float, 11> state_from_raw(struct AI_data data);
+  static std::array<float, 13> state_from_raw(struct AI_data data);
 
-  std::array<float, 11> state();
-  std::array<float, 10> savestate();
-  std::array<float, 101> state10();
+  std::array<float, 13> state();
 
   void action(std::array<float, 2> input);
 

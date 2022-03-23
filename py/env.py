@@ -20,7 +20,7 @@ class RoboSoccer(gym.Env):
         self.raw_env = robopy.SoccerEnv()
 
         self.action_space = gym.spaces.Box(-1, 1, (2,), dtype=np.float32)
-        self.observation_space = gym.spaces.Box(-1, 1, (11,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(-1, 1, (13,), dtype=np.float32)
 
     def init(self):
         self.inited = True
@@ -31,9 +31,9 @@ class RoboSoccer(gym.Env):
     
     def _state(self):
         return np.asarray(self.raw_env.state(), dtype=np.float32)
-    
-    def _stacked_state(self):
-        return np.asarray(self.raw_env.state10(), dtype=np.float32)
+
+    def _obs(self):
+        return self._state()
     
     def _shot_dist(self):
         if self.raw_env.side == 1.0:
@@ -46,11 +46,11 @@ class RoboSoccer(gym.Env):
 
         reward += -1.0 * (self.raw_env.dist_player1_ball() ** 0.8)
 
-        obs = self._state()
-        p1x, p1y, p1rx, p1ry, p2x, p2y, p2ry, p2rx, bx, by, side = obs
-        opp_obs = [p2x, p2y, p2rx, p2y, p1x, p1y, p1rx, p1y, bx, by, 1 - side]
+        st = self._state()
+        p1x, p1y, p1rx, p1ry, p2x, p2y, p2ry, p2rx, bx, by, bvx, bvy, side = st
+        opp_st = [p2x, p2y, p2rx, p2y, p1x, p1y, p1rx, p1y, bx, by, bvx, bvy, 1 - side]
 
-        opp_action = self.opponent.action(opp_obs)
+        opp_action = self.opponent.action(opp_st)
 
         prev_shot_dist = self._shot_dist()
         prev_dist_players = self.raw_env.dist_players()
@@ -66,7 +66,7 @@ class RoboSoccer(gym.Env):
         # if (new_dist_players < 0.07 and prev_dist_players > 0.07):
         #     pass# reward += -1000
 
-        obs = self._state()
+        obs = self._obs()
 
         return obs, reward, (hit != 0), {}
     
@@ -79,7 +79,7 @@ class RoboSoccer(gym.Env):
         if self.reset_hook:
             self.reset_hook(self)
 
-        return self._state()
+        return self._obs()
 
     def render(self, mode="human"):
         if mode != "human":
@@ -94,5 +94,5 @@ def register_envs():
     gym.envs.register(
         id="RoboSoccer-v0",
         entry_point=RoboSoccer,
-        max_episode_steps=32,
+        max_episode_steps=64,
     )

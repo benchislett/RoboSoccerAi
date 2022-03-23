@@ -18,7 +18,7 @@ struct PDDriveAgent {
 };
 
 struct SoccerAgent {
-  virtual std::array<float, 2> action(std::array<float, 11> input) = 0;
+  virtual std::array<float, 2> action(std::array<float, 13> input) = 0;
 };
 
 struct DefenderSoccerAgent : SoccerAgent {
@@ -27,7 +27,7 @@ struct DefenderSoccerAgent : SoccerAgent {
 
   DefenderSoccerAgent(bool p2 = false, float a = defender_aggression) : player2(p2), aggression(a) {}
 
-  std::array<float, 2> action(std::array<float, 11> input);
+  std::array<float, 2> action(std::array<float, 13> input);
 };
 
 struct TargetedSoccerAgent : SoccerAgent {
@@ -36,7 +36,7 @@ struct TargetedSoccerAgent : SoccerAgent {
 
   TargetedSoccerAgent(bool p2 = false, b2Vec2 t = {0, 0}) : player2(p2), target(t) {}
 
-  std::array<float, 2> action(std::array<float, 11> input);
+  std::array<float, 2> action(std::array<float, 13> input);
 };
 
 struct ChaserSoccerAgent : SoccerAgent {
@@ -44,7 +44,15 @@ struct ChaserSoccerAgent : SoccerAgent {
 
   ChaserSoccerAgent(bool p2 = false) : player2(p2) {}
 
-  std::array<float, 2> action(std::array<float, 11> input);
+  std::array<float, 2> action(std::array<float, 13> input);
+};
+
+struct ShooterSoccerAgent : SoccerAgent {
+  bool player2;
+
+  ShooterSoccerAgent(bool p2 = false) : player2(p2) {}
+
+  std::array<float, 2> action(std::array<float, 13> input);
 };
 
 enum SwitchupAgentModes { DEFENDER40, DEFENDER80, DEFENDER120, RANDOM };
@@ -62,7 +70,7 @@ struct SwitchupSoccerAgent : SoccerAgent {
 
   void new_agent();
 
-  std::array<float, 2> action(std::array<float, 11> input);
+  std::array<float, 2> action(std::array<float, 13> input);
 };
 
 struct ManualSoccerAgent : SoccerAgent {
@@ -70,5 +78,5 @@ struct ManualSoccerAgent : SoccerAgent {
 
   ManualSoccerAgent(const SoccerEnv& env) : window(env.window) {}
 
-  std::array<float, 2> action(std::array<float, 11> input);
+  std::array<float, 2> action(std::array<float, 13> input);
 };

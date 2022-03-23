@@ -8,19 +8,20 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(robopy, m) {
-  py::class_<BlankEnv<11, 4>>(m, "BlankEnv_11_4");
+  py::class_<BlankEnv<13, 4>>(m, "BlankEnv_13_4");
 
-  py::class_<SoccerEnv, BlankEnv<11, 4>>(m, "SoccerEnv")
+  py::class_<SoccerEnv, BlankEnv<13, 4>>(m, "SoccerEnv")
       .def(py::init<>())
       .def_readonly("side", &SoccerEnv::side)
       .def("init", &SoccerEnv::init)
       .def("update", &SoccerEnv::update)
       .def("reset", &SoccerEnv::reset)
       .def("state", &SoccerEnv::state)
-      .def("state10", &SoccerEnv::state10)
       .def("step", &SoccerEnv::step)
       .def("action", &SoccerEnv::action)
       .def("step_to_action", &SoccerEnv::step_to_action)
+      .def("net_left", &SoccerEnv::net_left)
+      .def("net_right", &SoccerEnv::net_right)
       .def("dist_players", &SoccerEnv::dist_players)
       .def("dist_player1_ball", &SoccerEnv::dist_player1_ball)
       .def("dist_player2_ball", &SoccerEnv::dist_player2_ball)
@@ -32,7 +33,6 @@ PYBIND11_MODULE(robopy, m) {
       .def("raw_state", &LiveSoccerEnv::raw_state)
       .def("reset", &LiveSoccerEnv::reset)
       .def("state", &LiveSoccerEnv::state)
-      .def("state10", &LiveSoccerEnv::state10)
       .def("action", &LiveSoccerEnv::action);
 
   py::class_<PDDriveAgent>(m, "PDDriveAgent")

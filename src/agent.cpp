@@ -44,15 +44,15 @@ std::array<float, 2> PDDriveAgent::action(std::array<float, 4> player_state, std
   return {clamp(m1, -1, 1), clamp(m2, -1, 1)};
 }
 
-static std::array<float, 11> swap_players(std::array<float, 11> input) {
-  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
-  return {p2x, p2y, p2rx, p2ry, p1x, p1y, p1rx, p1ry, bx, by, 1 - side};
+static std::array<float, 13> swap_players(std::array<float, 13> input) {
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, bvx, bvy, side] = input;
+  return {p2x, p2y, p2rx, p2ry, p1x, p1y, p1rx, p1ry, bx, by, bvx, bvy, 1 - side};
 }
 
-std::array<float, 2> DefenderSoccerAgent::action(std::array<float, 11> input) {
+std::array<float, 2> DefenderSoccerAgent::action(std::array<float, 13> input) {
   if (player2)
     input = swap_players(input);
-  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, bvx, bvy, side] = input;
 
   b2Vec2 net(0, height / length / 2.f);
 
@@ -68,20 +68,20 @@ std::array<float, 2> DefenderSoccerAgent::action(std::array<float, 11> input) {
   return {target.x, target.y};
 }
 
-std::array<float, 2> TargetedSoccerAgent::action(std::array<float, 11> input) {
+std::array<float, 2> TargetedSoccerAgent::action(std::array<float, 13> input) {
   if (player2)
     input = swap_players(input);
-  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, bvx, bvy, side] = input;
 
   if (manual_control)
     return PDDriveAgent{0, 1}.action({p1x, p1y, p1rx, p1ry}, {target.x, target.y});
   return {target.x, target.y};
 }
 
-std::array<float, 2> ChaserSoccerAgent::action(std::array<float, 11> input) {
+std::array<float, 2> ChaserSoccerAgent::action(std::array<float, 13> input) {
   if (player2)
     input = swap_players(input);
-  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, bvx, bvy, side] = input;
 
   float dx = p1x - p2x;
   float dy = p1y - p2y;
@@ -98,6 +98,37 @@ std::array<float, 2> ChaserSoccerAgent::action(std::array<float, 11> input) {
   if (manual_control)
     return PDDriveAgent{0, 1}.action({p1x, p1y, p1rx, p1ry}, {bx, by});
   return {bx, by};
+}
+
+std::array<float, 2> ShooterSoccerAgent::action(std::array<float, 13> input) {
+  if (player2)
+    input = swap_players(input);
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, bvx, bvy, side] = input;
+
+  b2Vec2 their_net(width / length, height / length / 2.f);
+
+  if (side)
+    their_net.x = 0;
+
+  float target_x, target_y;
+  float align_shot_x = their_net.x + (1.2 * (bx - their_net.x));
+  float align_shot_y = their_net.y + (1.2 * (by - their_net.y));
+
+  float dx = p1x - align_shot_x;
+  float dy = p1y - align_shot_y;
+  float d  = sqrtf(dx * dx + dy * dy);
+
+  if (1) { // if (d <= 0.1) {
+    target_x = align_shot_x;
+    target_y = align_shot_y;
+  } else {
+    target_x = their_net.x;
+    target_y = their_net.y;
+  }
+
+  if (manual_control)
+    return PDDriveAgent{0, 1}.action({p1x, p1y, p1rx, p1ry}, {target_x, target_y});
+  return {target_x, target_y};
 }
 
 void SwitchupSoccerAgent::new_agent() {
@@ -125,15 +156,15 @@ void SwitchupSoccerAgent::new_agent() {
   }
 }
 
-std::array<float, 2> SwitchupSoccerAgent::action(std::array<float, 11> input) {
+std::array<float, 2> SwitchupSoccerAgent::action(std::array<float, 13> input) {
   switch_counter++;
   if (switch_counter > switch_frequency)
     new_agent();
   return active_agent->action(input);
 }
 
-std::array<float, 2> ManualSoccerAgent::action(std::array<float, 11> input) {
-  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, side] = input;
+std::array<float, 2> ManualSoccerAgent::action(std::array<float, 13> input) {
+  auto [p1x, p1y, p1rx, p1ry, p2x, p2y, p2rx, p2ry, bx, by, bvx, bvy, side] = input;
 
   std::array<float, 2> target = {bx, by};
 

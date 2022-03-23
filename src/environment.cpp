@@ -120,51 +120,24 @@ void SoccerEnv::reset() {
   do {
     ball.reset();
   } while (is_goal() != 0);
-  history.clear();
-  // printf("Side: %d\n", side);
 }
 
-std::array<float, 11> SoccerEnv::state() const {
+std::array<float, 13> SoccerEnv::state() const {
   b2Vec2 player1_pos = player1.body->GetPosition();
   b2Vec2 player2_pos = player2.body->GetPosition();
   b2Vec2 ball_pos    = ball.body->GetPosition();
+  b2Vec2 ball_vel    = ball.body->GetLinearVelocity();
 
   float player1_rot = player1.body->GetAngle();
   float player2_rot = player2.body->GetAngle();
 
-  return {player1_pos.x,       player1_pos.y,     (cosf(player1_rot)), sinf(player1_rot), player2_pos.x, player2_pos.y,
-          (cosf(player2_rot)), sinf(player2_rot), ball_pos.x,          ball_pos.y,        (float) side};
-}
-
-std::array<float, 10> SoccerEnv::savestate() const {
-  auto st = state();
-  std::array<float, 10> rest;
-  std::copy(st.begin(), st.begin() + 10, rest.begin());
-  return rest;
-}
-
-std::array<float, 101> SoccerEnv::state10() {
-  std::array<float, 101> stacked_state;
-
-  auto st = savestate();
-  for (int idx = 0; idx < 10; idx++) {
-    int row = history.size() - 1 - idx;
-    if (row >= 0) {
-      st = history[row];
-    }
-    for (int i = 0; i < 10; i++) {
-      stacked_state[idx * 10 + i] = st[i];
-    }
-  }
-
-  stacked_state[100] = side;
-
-  return stacked_state;
+  return {player1_pos.x, player1_pos.y,       (cosf(player1_rot)), sinf(player1_rot), player2_pos.x,
+          player2_pos.y, (cosf(player2_rot)), sinf(player2_rot),   ball_pos.x,        ball_pos.y,
+          ball_vel.x,    ball_vel.y,          (float) side};
 }
 
 void SoccerEnv::step() {
   world->Step(timeStep, velocityIterations, positionIterations);
-  history.push_back(savestate());
 }
 
 int SoccerEnv::is_goal() const {
@@ -184,7 +157,7 @@ int SoccerEnv::is_goal() const {
   return hit;
 }
 
-std::array<float, 2> compute_action(std::array<float, 2> input, std::array<float, 11> st, bool player2) {
+std::array<float, 2> compute_action(std::array<float, 2> input, std::array<float, 13> st, bool player2) {
   if (manual_control)
     return input;
   else {
@@ -226,7 +199,7 @@ float SoccerEnv::action(std::array<float, 4> input) {
 
 float SoccerEnv::step_to_action(std::array<float, 4> input) {
   int hit = 0;
-  for (int i = 0; i < randInRange(35, 60); i++) {
+  for (int i = 0; i < 10; i++) {
     auto st = state();
 
     if (manual_control) {
@@ -258,6 +231,16 @@ float SoccerEnv::step_to_action(std::array<float, 4> input) {
   return hit;
 }
 
+std::array<float, 2> SoccerEnv::net_left() const {
+  b2Vec2 net(0, height / length / 2.f);
+  return {net.x, net.y};
+}
+
+std::array<float, 2> SoccerEnv::net_right() const {
+  b2Vec2 net(width / length, height / length / 2.f);
+  return {net.x, net.y};
+}
+
 float SoccerEnv::dist_player1_ball() const {
   return (player1.body->GetPosition() - ball.body->GetPosition()).Length();
 }
@@ -285,9 +268,9 @@ LiveSoccerEnv::LiveSoccerEnv() {
     int n_args = 0;
     glutInit(&n_args, NULL);
 
-    char videoid[16] = "/dev/video0";
+    char videoid[16] = "/dev/video2";
 
-    if (imageCaptureStartup(videoid, 1280, 720, 0, 0)) {
+    if (imageCaptureStartup(videoid, 1280, 720, 1, 0)) {
       fprintf(stderr, "Couldn't start image capture, terminating...\n");
       exit(0);
     }
@@ -300,9 +283,11 @@ struct AI_data LiveSoccerEnv::raw_state() const {
   return poll_ai_state();
 }
 
-std::array<float, 11> LiveSoccerEnv::state_from_raw(struct AI_data data) {
-  float ball_x = data.old_bcx;
-  float ball_y = data.old_bcy;
+std::array<float, 13> LiveSoccerEnv::state_from_raw(struct AI_data data) {
+  float ball_x  = data.old_bcx;
+  float ball_y  = data.old_bcy;
+  float ball_vx = data.bvx;
+  float ball_vy = data.bvy;
 
   if (data.ball != NULL) {
     ball_x = data.ball->cx;
@@ -334,58 +319,19 @@ std::array<float, 11> LiveSoccerEnv::state_from_raw(struct AI_data data) {
   float wx = 1280;
   float wy = 720;
 
-  return {self_x / wx, self_y / wy, self_rx,     self_ry,     opp_x / wx,  opp_y / wy,
-          opp_rx,      opp_ry,      ball_x / wx, ball_y / wy, (float) side};
+  return {self_x / wx, self_y / wy, self_rx,     self_ry, opp_x / wx, opp_y / wy,  opp_rx,
+          opp_ry,      ball_x / wx, ball_y / wy, ball_vx, ball_vy,    (float) side};
 }
 
-std::array<float, 11> LiveSoccerEnv::state() {
+std::array<float, 13> LiveSoccerEnv::state() {
   struct AI_data latest_record = raw_state();
-
-  int frame_id = latest_record.frames;
-
-  if (history.size() > 0 && history.back().frames == frame_id)
-    return state_from_raw(history.back());
-
-  history.push_back(latest_record);
-
-  if (history.size() > 1024) {
-    std::shift_left(history.begin(), history.end(), 1);
-    history.pop_back();
-  }
 
   return state_from_raw(latest_record);
 }
 
-std::array<float, 10> LiveSoccerEnv::savestate() {
-  auto st = state();
-  std::array<float, 10> rest;
-  std::copy(st.begin(), st.begin() + 10, rest.begin());
-  return rest;
-}
-
-std::array<float, 101> LiveSoccerEnv::state10() {
-  std::array<float, 101> stacked_state;
-
-  auto st = savestate();
-  for (int idx = 0; idx < 10; idx++) {
-    int row = history.size() - 1 - idx;
-    if (row >= 0) {
-      auto full = state_from_raw(history[row]);
-      std::copy(full.begin(), full.begin() + 10, st.begin());
-    }
-    for (int i = 0; i < 10; i++) {
-      stacked_state[idx * 10 + i] = st[i];
-    }
-  }
-
-  stacked_state[100] = state()[10];
-
-  return stacked_state;
-}
-
 void LiveSoccerEnv::action(std::array<float, 2> input) {
   auto action = compute_action({input[0], input[1]}, state(), false);
-  std::cout << "DRIVING: " << action[0] << ", " << action[1] << std::endl;
+  // std::cout << "DRIVING: " << action[0] << ", " << action[1] << std::endl;
   if (fabs(action[0]) < 0.1 && fabs(action[1]) < 0.1) {
     BT_all_stop(0);
   } else {
@@ -395,9 +341,7 @@ void LiveSoccerEnv::action(std::array<float, 2> input) {
   return;
 }
 
-void LiveSoccerEnv::reset() {
-  history.clear();
-}
+void LiveSoccerEnv::reset() {}
 
 LiveSoccerEnv::~LiveSoccerEnv() {
   runner->join();
