@@ -31,8 +31,8 @@ constexpr float defender_aggression = 0.5f; // 50% towards ball
 constexpr bool manual_control      = false;
 constexpr bool randomize_spawn_x   = false;
 constexpr bool randomize_spawn_y   = true;
-constexpr bool randomize_spawn_rot = false;
-constexpr bool randomize_ball_x    = true;
+constexpr bool randomize_spawn_rot = true;
+constexpr bool randomize_ball_x    = false;
 constexpr bool randomize_ball_y    = true;
 constexpr bool randomize_side      = false;
 constexpr float ball_size_variance = 0.0f; // 80% - 120%
@@ -57,8 +57,8 @@ constexpr int bot_width      = 70;
 constexpr int bot_height     = 30;
 constexpr int ball_radius    = 10;
 constexpr int wall_thickness = 5;
-constexpr int net_width      = 350;
-constexpr int net_height     = 450;
+constexpr int net_width      = 150;
+constexpr int net_height     = 250;
 
 // dimension in box2d
 constexpr float bot_width_f   = bot_width / length;
