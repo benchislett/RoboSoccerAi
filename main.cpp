@@ -9,50 +9,39 @@
 constexpr bool render = true;
 
 int main() {
-  DriveEnv env;
+  /*LiveSoccerEnv env;
+
+  int last_frame = 0;
+  while (env.raw_state().frames != 0)
+    ;
+  while (1) {
+    int frame = env.raw_state().frames;
+    if (frame > last_frame) {
+      last_frame = frame;
+      printf("F: %6d\n", last_frame);
+    }
+  }*/
+
+  SoccerEnv env;
   env.init(render);
 
-  int i = 0;
+  ManualSoccerAgent player(env);
+  ShooterSoccerAgent opponent(true);
 
-  auto open = [&]() {
-    if (render)
-      return env.window->isOpen();
-    else
-      return true;
-  };
-
-  while (open()) {
-    std::array<float, 2> action = {0, 0};
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-      action[0] = +1;
-      action[1] = +1;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-      action[0] = -1;
-      action[1] = -1;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-      action[0] = +1;
-      action[1] = -1;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-      action[0] = -1;
-      action[1] = +1;
-    }
-
+  for (int i = 0; i < 1024; i++) {
     if (render && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
       env.window->close();
       break;
     }
 
-    env.step();
+    auto player_action   = player.action(env.state());
+    auto opponent_action = opponent.action(env.state());
 
-    auto state = env.state();
-
-    env.action(action);
-    printf("State: %f, %f, %f, %f, %f, %f\n", state[0], state[1], state[2], state[3], state[4], state[5]);
+    float hit = env.step_to_action({player_action[0], player_action[1], opponent_action[0], opponent_action[1]});
+    if (fabsf(hit) > 0.1)
+      env.reset();
 
     env.update(render);
-
-    i++;
   }
 
   return 0;

@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(roboai LANGUAGES CXX)
+project(roboai LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH "/usr/share/SFML/cmake/Modules")
 
 find_package(Box2D REQUIRED)
 find_package(SFML 2 COMPONENTS graphics REQUIRED)
+find_package(OpenGL REQUIRED COMPONENTS OpenGL)
+find_package(GLUT REQUIRED)
+find_package(SDL2 REQUIRED)
 # find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -30,6 +33,27 @@ find_package(pybind11 CONFIG REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -I/usr/local/include -I/usr/include/python3.5 -L/usr/lib -lcrypt -lpthread -ldl -lutil -lm -lm")
 
 include_directories(include/)
+include_directories(imagecapture/)
+include_directories(robo_api/)
+include_directories(roboai/)
+include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIRS} )
+include_directories( ${SDL2_INCLUDE_DIRS} )
+
+file(GLOB imagecap_sources imagecapture/*.c)
+
+add_library(imagecapture STATIC ${imagecap_sources})
+target_link_libraries(imagecapture PUBLIC ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${SDL2_LIBRARIES} -lbluetooth -ljpeg )
+set_target_properties(imagecapture PROPERTIES LINKER_LANGUAGE C)
+
+file(GLOB roboapi_sources robo_api/*.c)
+
+add_library(roboapi STATIC ${roboapi_sources})
+set_target_properties(roboapi PROPERTIES LINKER_LANGUAGE C)
+
+file(GLOB roboai_sources roboai/*.c)
+
+add_library(roboai_main STATIC ${roboai_sources})
+set_target_properties(roboai_main PROPERTIES LINKER_LANGUAGE C)
 
 file(GLOB sources src/*.cpp)
 
@@ -38,9 +62,12 @@ target_link_libraries(robolib PUBLIC Box2D)
 target_link_libraries(robolib PUBLIC sfml-graphics)
 target_link_libraries(robolib PUBLIC sfml-window)
 target_link_libraries(robolib PUBLIC sfml-system)
+target_link_libraries(robolib PUBLIC roboapi)
+target_link_libraries(robolib PUBLIC imagecapture)
+target_link_libraries(robolib PUBLIC roboai_main)
 
 add_executable(main main.cpp)
-target_link_libraries(main PRIVATE robolib)
+target_link_libraries(main PUBLIC robolib)
 
 pybind11_add_module(robopy MODULE src/pybind.cpp)
 target_link_libraries(robopy PRIVATE robolib)
