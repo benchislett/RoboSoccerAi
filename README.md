@@ -10,10 +10,31 @@ Along with the C++ implementation are pybind11 bindings for the live and simulat
 
 ## Building / Dependencies
 
+### Docker
+
+The docker container provided in `docker/` encapsulates all dependencies required for the project.
+
+For everything to work properly (with X11 forwarding for graphical windows), invoke the container as follows:
+
+```
+docker run -it --privileged=true --net=host --volume="$HOME/.Xauthority:/root/.Xauthority:rw" -e DISPLAY=$DISPLAY --runtime=nvidia --rm --mount src="$(pwd)",target=/root/code/,type=bind benchislett/robosoccer-ai bash
+```
+
+Then inside the container, you can build and run:
+```
+cd root/code
+mkdir build && cd build
+cmake ..
+make
+cp ../py/* .
+```
+
+### Traditional Compilation
+
 The project is build using CMake and requires Python 3.10.
 
-Be sure to initialize the submodules, either when cloning with `--recurse-submodules` (formerly `--recursive`), or after cloning with `git submodule update --init
-`. You might need to build the `extern/pybind11` submodule.
+Be sure to initialize the submodules, either when cloning with `--recurse-submodules` (formerly `--recursive`), or after cloning with `git submodule update --init`. 
+You might need to build the `extern/pybind11` submodule.
 
 ### CMake
 
@@ -94,6 +115,8 @@ When tuning parameters or introducing new features, it is good to run on the mai
 Uncommenting the live soccer environment instead of the robosoccer environment will run the C++ wrapper for the C RoboSoccer environment.
 It should run seamlessly as if the C code was run directly.
 
+![](manual-agent-cpp-example.gif)
+
 ### Python Bindings and Training
 
 #### Gym Environment
@@ -121,6 +144,9 @@ As long as the model supports the same interface it will work. I have found best
 `train_soccer_pool.py` trains a pool of agents against each other.
 
 `test_soccer.py` evaluates a trained agent against any chosen opponent. The opponent must be one of the manually defined agents.
+Will open a graphical window for validation.
+
+![](soccer-agent-scores.gif)
 
 `imitate_soccer.py` is a work-in-progress using the `imitation` library.
 The library is very out-of-date, and requires a previous version of stable-baselines3 to work.
@@ -128,4 +154,3 @@ I had to hack some workarounds in the source of this library in order to get thi
 
 `eval_live_soccer.py` runs the live soccer environment on a specified agent, trained or manual.
 It is crucial for testing that the learned model transfers to practical usage.
-
