@@ -13,6 +13,7 @@ Along with the C++ implementation are pybind11 bindings for the live and simulat
 ### Docker
 
 The docker container provided in `docker/` encapsulates all dependencies required for the project.
+It is hosted on [docker hub](https://hub.docker.com/repository/docker/benchislett/robosoccer-ai) for convenience.
 
 For everything to work properly (with X11 forwarding for graphical windows), invoke the container as follows:
 
