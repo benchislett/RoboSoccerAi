@@ -1,5 +1,5 @@
 import stable_baselines3
-from stable_baselines3 import PPO, SAC, TD3, HerReplayBuffer
+from stable_baselines3 import PPO, SAC, TD3
 from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
 from torch import nn as nn
 import numpy as np

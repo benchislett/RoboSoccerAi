@@ -68,7 +68,10 @@ class RoboSoccer(gym.Env):
 
         obs = self._obs()
 
-        return obs, reward, (hit != 0), {}
+        if hit != 0:
+            self.raw_env.reset()
+
+        return obs, reward, False, {}
     
     def set_reset_hook(self, func):
         self.reset_hook = func

@@ -1,17 +1,17 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.20)
 
 project(roboai LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH "/usr/share/SFML/cmake/Modules")
 
-find_package(Box2D REQUIRED)
+find_package(box2d REQUIRED)
 find_package(SFML 2 COMPONENTS graphics REQUIRED)
 find_package(OpenGL REQUIRED COMPONENTS OpenGL)
 find_package(GLUT REQUIRED)
 find_package(SDL2 REQUIRED)
 # find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -30,7 +30,10 @@ endif()
 
 find_package(pybind11 CONFIG REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -I/usr/local/include -I/usr/include/python3.5 -L/usr/lib -lcrypt -lpthread -ldl -lutil -lm -lm")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -I/usr/local/include -I/usr/include/python3.10 -L/usr/lib -lcrypt -lpthread -ldl -lutil -lm -lm")
+
+string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
+# target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
 
 include_directories(include/)
 include_directories(imagecapture/)
@@ -58,7 +61,7 @@ set_target_properties(roboai_main PROPERTIES LINKER_LANGUAGE C)
 file(GLOB sources src/*.cpp)
 
 add_library(robolib STATIC ${sources})
-target_link_libraries(robolib PUBLIC Box2D)
+target_link_libraries(robolib PUBLIC box2d)
 target_link_libraries(robolib PUBLIC sfml-graphics)
 target_link_libraries(robolib PUBLIC sfml-window)
 target_link_libraries(robolib PUBLIC sfml-system)

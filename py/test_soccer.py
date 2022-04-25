@@ -19,7 +19,7 @@ def get_args():
     )
 
     parser.add_argument('PlayerName')
-    parser.add_argument('Opponent', nargs='?', default="ChaserSoccerAgent", type=str)
+    parser.add_argument('Opponent', nargs='?', default="DefenderSoccerAgent", type=str)
     args = parser.parse_args()
 
     return [args.PlayerName, args.Opponent]

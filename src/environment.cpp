@@ -138,6 +138,9 @@ std::array<float, 13> SoccerEnv::state() const {
 
 void SoccerEnv::step() {
   world->Step(timeStep, velocityIterations, positionIterations);
+  // Comment out these lines for a much faster visualization
+  if (debugDraw)
+    update(true);
 }
 
 int SoccerEnv::is_goal() const {
@@ -268,7 +271,7 @@ LiveSoccerEnv::LiveSoccerEnv() {
     int n_args = 0;
     glutInit(&n_args, NULL);
 
-    char videoid[16] = "/dev/video2";
+    char videoid[16] = "/dev/video1";
 
     if (imageCaptureStartup(videoid, 1280, 720, 1, 0)) {
       fprintf(stderr, "Couldn't start image capture, terminating...\n");

@@ -1,9 +1,9 @@
-#include "box2d/box2d.h"
 #include "environment.hpp"
 #include "misc.hpp"
 #include "visualize.hpp"
 
 #include <array>
+#include <box2d/box2d.h>
 #include <cstdlib>
 #include <memory>
 

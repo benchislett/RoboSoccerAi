@@ -29,7 +29,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/select.h>
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #include <linux/videodev2.h>
 #include "avilib.h"
 

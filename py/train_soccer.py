@@ -12,11 +12,11 @@ from agent import SoccerAgent
 
 from env import register_envs, RoboSoccer
 
-EPOCH_SIZE = 500_000
+EPOCH_SIZE = 200_000
 
 def get_args():
     parser = argparse.ArgumentParser(
-        usage="%(prog)s [Epochs] [ResumeEpoch]",
+        usage="%(prog)s [Epochs] [ResumeEpoch] [SaveDir]",
         description="""
         Train a model on the RoboSoccer environment.
         """
@@ -24,7 +24,7 @@ def get_args():
 
     parser.add_argument('Epochs', nargs='?', default=9999999, type=int)
     parser.add_argument('ResumeEpoch', nargs='?', default=0, type=int)
-    parser.add_argument('SaveDir', nargs='?', default="models1", type=str)
+    parser.add_argument('SaveDir', nargs='?', default="models", type=str)
     args = parser.parse_args()
 
     return [args.Epochs, args.ResumeEpoch, args.SaveDir]

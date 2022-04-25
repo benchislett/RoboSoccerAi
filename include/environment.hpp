@@ -1,8 +1,9 @@
 #pragma once
 
-#include "box2d/box2d.h"
 #include "misc.hpp"
 #include "visualize.hpp"
+
+#include <box2d/box2d.h>
 
 extern "C" {
 #include "btcomm.h"
